@@ -18,7 +18,7 @@ make check
 
 Windows는 `.venv/bin/python`을 `.venv/Scripts/python`으로 바꿉니다.
 lock은 버전 고정 목록이며 플랫폼별 wheel이나 해시까지 고정하지는 않습니다.
-Phaser·OpenAI SDK는 해당 구현 단계에서 추가하여 의존성을 최소화합니다.
+Gemini SDK는 B 통합에 포함했습니다. Phaser는 C의 화면/표현 단계에서 추가합니다.
 
 ## 로컬 DB
 
@@ -94,3 +94,22 @@ B의 분석 완료 후 자동 호출은 아직 연결하지 않았습니다.
 현재 단계 완료 후에는 검증된 변경을 로컬 커밋으로 보존하고 현재 기능 브랜치의 원격을 pull합니다.
 공통 main의 변경도 필요 시 병합합니다. 충돌은 양쪽 기능을 보존하며 해결하고 변경이 생기면 다시 검증합니다.
 원격 작업 브랜치가 없으면 origin/main을 pull하여 기반 변경만 반영합니다. push는 별도 요청 시 수행합니다.
+
+## B 통합 (현재 경로)
+
+`0005`는 원본 사진/글·분석 상태·스탯 저장 결과를 사용자별 activity_records에 저장하고
+characters.stats에 B가 계산한 최신 목록을 저장합니다. 기존 테이블을 삭제하지 않습니다.
+현재 런타임 경로는 `/api/records` → B의 Gemini 분석 → B의 스탯 계산 → A의 원자적 저장입니다.
+이 문서 앞부분의 A 효과 지급 설명은 이전 실험 구현이며 현재 통합 흐름에서는 호출하지 않습니다.
+
+B 원본 Python 폴더를 setuptools의 `campus_records_prototype` 패키지로 매핑했습니다.
+새 backend 하위 패키지를 추가하면 pyproject.toml의 packages 목록도 갱신합니다.
+공통 의존성은 root requirements-dev.lock으로 설치하며 두 앱의 app 패키지 이름은 충돌하지 않습니다.
+B 원본 테스트는 prototypes/records-analysis 폴더에서 별도 프로세스로 실행합니다.
+B 공용 시제품 DB는 사용자별 DB에 자동 합치지 않습니다.
+
+확인 화면은 임시 구현입니다. C는 [화면 계약](frontend-contract.md)을 사용합니다.
+실제 모델 호출은 로컬 .env의 GEMINI_API_KEY와 GEMINI_MODEL을 설정한 뒤 확인합니다.
+자동 테스트는 외부 API를 호출하지 않습니다.
+개발 서버는 단일 프로세스입니다. 서버 시작 시 미완료 작업을 실패로 바꿔 원본으로 재시도하도록 합니다.
+여러 프로세스/서버의 작업 소유권과 외부 큐는 후속 구현입니다.

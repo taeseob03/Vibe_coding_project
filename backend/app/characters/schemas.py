@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.integrations.schemas import StatRead
+
 
 class CharacterColor(StrEnum):
     green = "green"
@@ -41,3 +43,5 @@ class CharacterRead(BaseModel):
     user_id: UUID
     color: CharacterColor
     effects: list[EffectRead] = Field(default_factory=list)
+
+    stats: list[StatRead] = Field(default_factory=list)

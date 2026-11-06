@@ -1,7 +1,7 @@
-import { mountAccount } from '/accounts/index.js';
-import { mountOnboarding } from '/accounts/onboarding.js';
-import { mountCharacter } from '/characters/index.js';
-import { mountRecords } from '/records/index.js';
+import { mountAccount } from '/static/accounts/index.js';
+import { mountOnboarding } from '/static/accounts/onboarding.js';
+import { mountCharacter } from '/static/characters/index.js';
+import { mountRecords } from '/static/records/index.js';
 
 const user = await mountAccount();
 if (user) {

@@ -10,6 +10,7 @@ from app.characters.effect_models import CharacterEffect, EffectGrant
 from app.characters.models import Character
 from app.characters.schemas import CharacterRead, EffectApplicationRead, EffectId, EffectRead
 from app.core.db import get_engine
+from app.integrations.state_store import current_stats
 from app.records.models import Record
 
 EFFECT_BY_CATEGORY = {
@@ -40,6 +41,7 @@ def read_character(db: Session, character: Character) -> CharacterRead:
         user_id=character.user_id,
         color=character.color,
         effects=[EffectRead.model_validate(effect) for effect in effects],
+        stats=current_stats(character),
     )
 
 

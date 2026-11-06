@@ -1,4 +1,4 @@
-import { api } from '/shared/api.js';
+import { api } from '/static/shared/api.js';
 
 export async function mountAccount() {
   const status = document.querySelector('#account');

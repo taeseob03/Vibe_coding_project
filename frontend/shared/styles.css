@@ -25,3 +25,5 @@ input { display: block; width: 100%; margin: 12px 0; padding: 12px; font: inheri
 .color-yellow { --avatar-color: #f1d878; }
 .color-pink { --avatar-color: #eeb0c3; }
 .color-purple { --avatar-color: #c4ade5; }
+
+.record-thumbnail { display: block; max-width: 100%; max-height: 240px; object-fit: contain; margin: 12px 0; }

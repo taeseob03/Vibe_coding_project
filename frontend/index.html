@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>캠퍼스 캐릭터</title>
-  <link rel="stylesheet" href="/shared/styles.css">
+  <link rel="stylesheet" href="/static/shared/styles.css">
 </head>
 <body>
   <main>
     <h1>캠퍼스 캐릭터</h1>
-    <p>팀 개발 환경 확인 화면 · 고정된 임시 분석을 사용합니다.</p>
+    <p>기록을 남기고 내 캐릭터의 변화를 확인해 보세요.</p>
     <section aria-labelledby="account-heading">
       <h2 id="account-heading">아이디로 시작하기</h2>
       <p>처음 입력한 아이디는 새 계정이 되고, 다시 입력하면 이어서 사용할 수 있어요.</p>
@@ -60,11 +60,15 @@
       <button id="character-refresh" type="button">캐릭터 다시 불러오기</button>
     </section>
     <section id="record-section" aria-labelledby="record-heading" hidden>
-      <h2 id="record-heading">B · 기록과 분석</h2>
+      <h2 id="record-heading">내 대학생활 기록</h2>
       <form id="record-form">
         <label for="record-text">오늘의 대학생활</label>
-        <textarea id="record-text" required maxlength="10000" rows="4"></textarea>
-        <button type="submit">임시 분석으로 저장</button>
+        <textarea id="record-text" maxlength="5000" rows="4"></textarea>
+        <label for="record-image">사진 한 장 (선택)</label>
+        <input id="record-image" type="file" accept="image/jpeg,image/png,image/webp">
+        <img id="record-preview" class="record-thumbnail" alt="선택한 사진 미리보기" hidden>
+        <p>글 또는 사진을 입력해 주세요. 분석 시 내용이 Google Gemini로 전송됩니다.</p>
+        <button type="submit">기록 저장하고 분석하기</button>
       </form>
       <p id="message" role="status" aria-live="polite"></p>
       <button id="refresh" type="button">목록 새로고침</button>
@@ -72,6 +76,6 @@
     </section>
     <p><a href="/docs">API 문서</a></p>
   </main>
-  <script type="module" src="/shared/main.js"></script>
+  <script type="module" src="/static/shared/main.js"></script>
 </body>
 </html>
