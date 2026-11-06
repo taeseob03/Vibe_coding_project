@@ -286,3 +286,6 @@ body > main label { font-weight: 700; }
 @media (prefers-reduced-motion: reduce) {
   button { transition: none; }
 }
+.main-character.has-pixel-character { width: min(100%, 420px); height: auto; }
+.character-stage:has(.has-pixel-character) .stage-decoration,
+.character-stage:has(.has-pixel-character) .character-ground { display: none; }

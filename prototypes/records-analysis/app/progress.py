@@ -86,6 +86,23 @@ def snapshot(record_id=None):
             delta["운동"] = -1
         if saved_id == record_id:
             changes = delta
+    return calculate_progress(counts), changes
+
+
+def eligible_category(result):
+    return result.category if not result.needs_review else None
+
+
+def advance_counts(counts, category):
+    counts = {key: counts.get(key, 0) for key in EFFECTS}
+    if category in counts:
+        counts[category] += 1
+        if category == "술":
+            counts["운동"] = max(0, counts["운동"] - 1)
+    return counts
+
+
+def calculate_progress(counts):
     effects = []
     for category, effect in EFFECTS.items():
         count = counts.get(category, 0)
@@ -99,7 +116,7 @@ def snapshot(record_id=None):
                 "color": ["#d1d5db", "#f9a8d4", "#ec4899", "#be123c"][level],
             }
         )
-    return effects, changes
+    return effects
 
 
 def state():

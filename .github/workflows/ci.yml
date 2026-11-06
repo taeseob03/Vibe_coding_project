@@ -16,6 +16,9 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: pytest -q
+      - name: Preserve B prototype rules
+        working-directory: prototypes/records-analysis
+        run: python -m pytest --disable-plugin-autoload -q
       - name: Verify migrations and model consistency
         env:
           DATABASE_URL: sqlite:///./ci.db

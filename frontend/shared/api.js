@@ -5,7 +5,10 @@ export async function api(path, options = {}) {
       ...options,
       signal: options.signal ?? AbortSignal.timeout(12000),
       credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json', ...options.headers },
+      headers: {
+        ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+        ...options.headers,
+      },
     });
   } catch (error) {
     throw new Error(error.name === 'TimeoutError'

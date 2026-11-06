@@ -232,6 +232,7 @@ function drawSprite(ctx, key, x, y, p, override) {
 export function createStage(canvas, getState) {
   const S = 5, ctx = canvas.getContext('2d');
   const pops = {};
+  let animationId = null;
   let state = getState();
   let charPixels = composeCharacter(state.appearance, state.profile.major);
 
@@ -260,7 +261,7 @@ function drawCharacter(oy) {
 
 function drawNameplate() {
   const name = state.profile.nickname || '닉네임';
-  const sub = `${state.profile.grade}학년 · ${DEPTS[state.profile.major]?.name || '학과'}`;
+  const sub = [state.profile.grade ? `${state.profile.grade}학년` : '', DEPTS[state.profile.major]?.name].filter(Boolean).join(' · ');
   ctx.font = 'bold 15px -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
   const w = Math.max(ctx.measureText(name).width, (ctx.font = '12px sans-serif', ctx.measureText(sub).width)) + 24;
   ctx.fillStyle = 'rgba(40,28,22,.82)';
@@ -290,7 +291,8 @@ function drawItems(t) {
       if (key === 'love') {
         const off = [[0, 0], [11, -6], [4, 10]][i];
         const bob = Math.round(Math.sin(t / 500 + i * 1.7) * 2) * 2;
-        drawSprite(ctx, 'love', CX + 18 * S + off[0] * p, 60 + off[1] * p + bob, p);
+        drawSprite(ctx, 'love', CX + 18 * S + off[0] * p, 60 + off[1] * p + bob, p,
+          state.colors?.love ? { R: state.colors.love } : undefined);
       }
     }
     if (since < 700) { // 반짝임
@@ -309,13 +311,14 @@ function frame(t) {
   drawItems(t);
   drawCharacter(oy);
   drawNameplate();
-  requestAnimationFrame(loop);
+  animationId = requestAnimationFrame(loop);
 }
 
   function loop(t) { state = getState(); frame(t); }
   // frame() 안의 requestAnimationFrame(frame)을 loop로 돌립니다.
   return {
-    start() { requestAnimationFrame(loop); },
+    start() { if (animationId === null) animationId = requestAnimationFrame(loop); },
+    stop() { if (animationId !== null) cancelAnimationFrame(animationId); animationId = null; },
     redraw() { state = getState(); charPixels = composeCharacter(state.appearance, state.profile.major); },
     pop(key) { pops[key] = performance.now(); },
   };

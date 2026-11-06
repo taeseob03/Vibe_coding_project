@@ -5,32 +5,46 @@
 친구의 게시물은 피드의 `친구 등록`에서 실제 계정의 닉네임 검색 → 요청 → 상대 수락 후 볼 수 있습니다.
 기존 라운지의 예제 초대는 이 친구 등록과 별개입니다.
 
-대학생활 기록을 분석해 캐릭터 효과를 모으는 웹앱의 공동 개발 환경입니다.
-개발 계획 원문은 [campus-app-development-plan.md](campus-app-development-plan.md)에 보존했습니다.
+A의 계정·캐릭터 저장 기능과 B의 사진/글 Gemini 분석·스탯 계산을 연결한 통합 개발 앱입니다.
+C는 이 API를 사용해 게임 화면과 캐릭터 표현을 제작합니다.
+main에서 가져온 C의 Phaser 초안은 `frontend/characters/phaser-draft.js`에 원문 그대로 보존했습니다.
+현재 공통 진입점은 접속/최초 설정/기록 연결을 유지하며, Phaser 설치·실행 및 실제 게임 화면 연결은 C와의 후속 단계입니다.
+사용자가 제공한 원문은 [campus-app-development-plan.md](campus-app-development-plan.md)에 보존했으며,
+현재 역할과 규약은 아래 문서를 기준으로 합니다.
 
-## 빠른 시작
+## 실행
 
-Python 3.12 이상과 Git이 필요합니다. 현재 프런트엔드는 빌드 없는 HTML/CSS/JavaScript이므로 Node.js가 필요하지 않습니다.
-모든 명령은 저장소 루트에서 실행합니다.
+Python 3.12 이상과 Git이 필요합니다. 임시 확인 화면은 HTML/CSS/JavaScript이며 Node.js가 필요하지 않습니다.
+현재 통합 구현은 `feature/account-character` 브랜치에 있습니다.
 
 ```bash
-git clone https://github.com/taeseob03/Vibe_coding_project.git
+git clone --branch feature/account-character https://github.com/taeseob03/Vibe_coding_project.git
 cd Vibe_coding_project
 make setup
 make migrate
+```
+
+루트 `.env`에 본인의 `GEMINI_API_KEY`를 입력합니다. `GEMINI_MODEL`은 B가 설정한 모델명입니다.
+기존 `.env`를 덮어쓰지 말고 빠진 항목만 `.env.example`을 참고해 추가하세요.
+`DEV_AUTH_ENABLED=false`로 설정하면 아이디 접속 화면이 표시됩니다.
+
+```bash
 make dev
 ```
 
-- 화면: http://127.0.0.1:8000
+- 확인 화면: http://127.0.0.1:8000
 - API 문서: http://127.0.0.1:8000/docs
 - 상태 확인: http://127.0.0.1:8000/health
-- 검증: `make check`
 - 서버 종료: `Ctrl+C`
 
-`make setup`은 `.venv`를 만들고 고정 버전 의존성을 설치하며, 기존 `.env`가 없을 때만 `.env.example`을 복사합니다.
-새 환경 설치에는 인터넷이 필요합니다. 각 개발자는 별도 `.env`와 SQLite DB를 사용합니다.
+코드나 `.env` 변경 뒤 서버를 다시 시작합니다.
+사진/글 분석은 Google Gemini에 입력을 전송합니다. 키가 없으면 원본 기록을 보존한 채 분석 실패로 안내합니다.
+키를 설정하고 다시 시작한 뒤 해당 기록의 재시도 버튼으로 분석할 수 있습니다.
 
-### Windows PowerShell 또는 make가 없는 환경
+### make가 없는 환경
+
+Windows PowerShell 예시입니다. macOS/Linux에서는 `python`을 `python3`,
+`.venv/Scripts/python`을 `.venv/bin/python`으로 바꿉니다.
 
 ```powershell
 python -m venv .venv
@@ -38,15 +52,37 @@ python -m venv .venv
 .venv/Scripts/python scripts/init_env.py
 .venv/Scripts/python -m alembic upgrade head
 .venv/Scripts/python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-# 별도 터미널에서 검증
-.venv/Scripts/python -m ruff check .
-.venv/Scripts/python -m ruff format --check .
-.venv/Scripts/python -m pytest -q
 ```
 
-macOS/Linux에서 make 없이 실행할 때는 위의 `python`을 `python3`로, `.venv/Scripts/python`을 `.venv/bin/python`으로 바꿉니다.
+## 역할과 현재 흐름
 
-## 역할별 구조
+| 담당 | 역할 |
+|---|---|
+| A | 계정·인증·캐릭터, 사용자 소유권 검사, 분석 결과와 스탯의 저장·조회, 공통 연결 API |
+| B | 사진/글 입력 검증, Gemini 키워드·활동 분석, 스탯 계산·상태 규칙 |
+| C | 게임 화면·캐릭터·소품·표정·동작·애니메이션 표현 |
+
+1. 아이디만으로 접속합니다. 처음 쓰는 아이디는 새 계정, 같은 아이디는 기존 계정입니다.
+2. 별도 닉네임과 임시 캐릭터 색상을 선택합니다. 임시 저장 후 다시 이어갈 수 있습니다.
+3. 사진 한 장 또는 글을 저장합니다. 원본은 인증된 사용자에게 연결됩니다.
+4. B의 Gemini 분석을 실행하고 대기/진행/완료/실패를 표시합니다.
+5. B가 계산한 스탯 결과를 A가 사용자 캐릭터에 저장하고 화면에 전달합니다.
+6. 분석 실패는 원본으로 재시도하며, 스탯 저장 실패는 저장된 분석으로 재처리합니다.
+
+현재 B 코드의 스탯은 활동별 횟수와 그에 따른 표시 단계·색상입니다.
+술·공부·연애·운동의 분류와 계산식은 B의 원본을 유지했습니다.
+A가 이전에 만든 ‘새 기록마다 소품 레벨 +1’은 새 통합 흐름에서 사용하지 않습니다.
+구체적인 표정 전환 코드는 현재 B에 없으므로 A가 임의로 추가하지 않았습니다.
+C는 [화면 연결 규약](docs/frontend-contract.md)의 스탯 필드를 사용할 수 있습니다.
+
+접속 아이디는 한글·영문·숫자·밑줄 2~20자, 닉네임은 2~12자입니다.
+아이디만으로 접속하므로 해당 아이디를 아는 사람은 같은 계정을 사용할 수 있습니다.
+세션은 기본 7일간 유지되며 현재 브라우저 로그아웃 시 폐기합니다.
+사진은 JPG/PNG/WEBP 한 장, 최대 10MB·2,500만 픽셀입니다. 글은 최대 5,000자입니다.
+현재 개발용 SQLite DB가 원본 사진도 보관하며 사진 조회에 소유권을 확인합니다.
+사진·글 삭제/수정과 보상 회수, 칭호, 라운지, 최종 디자인은 후속 단계입니다.
+
+## 구조와 B 원본 활용
 
 ### 로그인부터 새 웹 앱까지 한 주소에서 로컬 테스트
 
@@ -66,89 +102,64 @@ http://127.0.0.1:8001 을 엽니다. 기존 화면이 남으면 Ctrl+F5로 갱�
 일반 기본 실행에서 이 옵션은 false이며, 운영 환경에서는 연결 모드가 등록되지 않습니다.
 
 캐릭터 설정 완료 후 `/app`으로 이동합니다. 새 메인에 선택한 닉네임과 색상이 표시됩니다.
-게시의 스택은 로그인한 UUID별 SQLite 파일에 저장되므로 다른 계정과 섞이지 않습니다.
-기존 계정/캐릭터 DB나 이전 공용 시제품 기록을 덮어쓰거나 자동 이관하지 않습니다.
+게시의 스택은 로그인한 계정의 characters.stats에 저장되어 `/characters/me`에서도 동일하게 조회됩니다.
+기존 사용자별 시제품 스택은 최초 연결 시 기준값으로 이어받으며 이전 공용 시제품 기록은 가져오지 않습니다.
 라운지 초대는 브라우저에 계정별로 저장되는 예제이며 수락 테스트 창을 사용합니다.
 피드의 친구 등록은 실제 계정과 서버 DB를 사용합니다. 나/친구/전체 필터와 이전 게시물 더 보기를 지원합니다.
 라운지의 내 캐릭터는 실제 게시 스택, 예제 친구는 예제 스택을 표시합니다.
 
 이 모드는 A의 인증/프로필을 재사용하는 **로컬 검증용 연결**입니다.
-기록 스택 저장은 개발 전용 `backend/data/web-preview/{사용자 UUID}.sqlite3`에 분리되어 있으며,
-A의 기존 다섯 분류 효과 테이블과의 최종 통합은 별도 단계입니다.
+두 게시 API(`/api/keywords`, `/api/records`) 모두 A의 activity_records와 characters.stats를 사용합니다.
+기존 사용자별 SQLite는 이전 기록의 분석 캐시/기준값 호환용이며 화면의 최신 스택은 계정 DB가 기준입니다.
+술은 운동 스택을 1 감소시키며 최솟값은 0입니다. 재시도는 스택을 중복 반영하지 않습니다.
 키는 서버의 `.env`에서만 읽고 브라우저에는 보내지 않습니다.
 게시 사진·원문·분석 상태와 친구 관계는 계정 DB의 web_posts/web_friend_requests에 저장합니다.
 사진은 공개 정적 파일로 제공하지 않으며 본인 또는 수락한 친구만 인증 후 조회합니다.
 기존 시제품에서 원본을 저장하지 않았던 과거 사진은 복구할 수 없습니다. 새로 게시한 사진부터 피드에 남습니다.
 
+최신 main의 픽셀 캐릭터 렌더러가 메인에 연결되어 있습니다. C의 독립 미리보기는 `/preview/character.html`입니다.
+표시 단계는 기존 1~4회/5~9회/10회 이상 규칙을 유지하고 C 렌더러에 맞춰 변환합니다.
+아직 저장 규약이 없는 성별·머리·학과 설정은 미리보기에서만 시험하며 실제 최초 설정은 닉네임/색상입니다.
+
 ```text
-backend/
-  app/
-    accounts/       A: 로그인·사용자·최초 설정·공통 인증 의존성
-    characters/     A: 캐릭터·효과 지급 함수
-    records/        B: 기록 모델·API·분석 상태
-    analysis/       B: 분석 스키마·임시/실제 AI 어댑터
-    core/           공동: 환경 설정·DB·오류 응답
-    main.py         공동: 라우터 등록·정적 화면 제공
-  migrations/       공동: Alembic 스키마 이력
-  tests/            API·권한·환경 검증
-frontend/
-  accounts/         A: 로그인·최초 설정 화면
-  characters/       A: 기본 캐릭터 연결, 이후 B가 시각 표현 정리
-  records/          B: 기록 작성·목록·결과 화면
-  shared/           공동: API 호출·화면 진입점·공통 스타일
-  assets/           B: 후속 Phaser·캐릭터 이미지 자산
-scripts/            개발 설정 초기화
-.github/            CI·PR 템플릿
+backend/app/accounts/       A: 접속·최초 설정
+backend/app/characters/     A: 캐릭터·스탯 조회 (이전 effects 구현은 호환용)
+backend/app/integrations/   A: B 결과의 사용자별 저장·작업 상태·재시도·연결 API
+backend/app/records/        초기 mock API, 호환용으로 보존
+prototypes/records-analysis/app/
+  analysis.py              B: Gemini 분석 원본
+  effects.py               B: 활동별 표시 정보 원본
+  progress.py              B: calculate_progress / eligible_category 공통 계산 함수
+frontend/                  C가 교체할 기능 확인용 화면
 ```
 
-## 현재 구현 범위
+B 브랜치를 merge하여 원본과 Git 이력을 보존했습니다.
+B의 Python 소스를 `campus_records_prototype` 패키지로 등록하여 공통 앱에서 직접 사용합니다.
+기존 B의 독립 실행 방법은 [시제품 문서](prototypes/records-analysis/README.md)를 참고하세요.
+B의 로컬 공용 DB를 A의 사용자별 DB로 자동 복사하지는 않습니다.
 
-A의 첫 단계로 **아이디만 입력하는 접속**을 구현했습니다.
-첫 입력은 계정 생성, 같은 아이디의 다음 입력은 기존 계정으로 접속합니다.
-비밀번호·이메일 인증은 사용하지 않습니다. 아이디를 아는 사람은 같은 계정으로 들어갈 수 있습니다.
-아이디는 한글·영문·숫자·밑줄 2~20자이며, 앞뒤 공백을 제거하고 영문 소문자로 통일합니다.
+현재 작업 실행은 단일 프로세스 개발 서버의 BackgroundTasks를 사용합니다.
+재시작 시 중단된 분석을 failed로 표시하며 사용자가 재시도합니다.
+여러 서버/워커를 운영할 때의 작업 소유권·큐 확장은 별도 단계입니다.
 
-1. `make migrate` 후 `make dev`를 실행합니다.
-2. 화면에서 아이디를 입력하고 시작하기를 누릅니다.
-3. 닉네임(2~12자)을 저장하고 캐릭터 색상을 선택해 최초 설정을 완료합니다.
-4. 기록을 작성하고 새로고침하거나 로그아웃 후 같은 아이디로 접속해 저장 상태를 확인합니다.
-5. 다른 아이디로 접속하면 별도 계정의 기록 목록이 표시됩니다.
+## 검증과 협업
 
-접속은 7일간 유지되며, 로그아웃하면 현재 브라우저의 서버 세션이 폐기됩니다.
-브라우저에는 HttpOnly 쿠키를, DB에는 세션 토큰의 해시를 저장합니다.
-개발 외 환경의 쿠키는 HTTPS 전용입니다.
+```bash
+make check
+# B 원본 테스트는 해당 폴더에서 별도로 실행합니다.
+cd prototypes/records-analysis
+../../.venv/bin/python -m pytest --disable-plugin-autoload -q
+```
 
-기존 개발 환경에서 `.env`에 `DEV_AUTH_ENABLED=true`가 있으면 `false`로 바꾸세요.
-B가 독립 개발 시 명시적으로 임시 인증을 켜는 기능은 유지합니다.
-`DEV_AUTH_ENABLED=true`는 `APP_ENV=development`에서만 허용됩니다.
-`.env`, DB, 업로드 파일은 Git에서 제외됩니다.
+자동 테스트에서는 Gemini 응답을 대체하므로 API 키 없이 실행됩니다.
+실제 모델의 응답 품질과 계정의 모델 접근 여부는 유효한 키를 설정해 별도로 확인합니다.
+브라우저 E2E 자동화는 아직 없습니다. GitHub CI는 통합 앱과 B 원본 테스트·마이그레이션을 확인합니다.
 
-최초 설정은 별도 닉네임과 임시 캐릭터 색상(초록/파랑/노랑/분홍/보라)을 저장합니다.
-입력란에서 벗어나거나 다음 단계로 이동할 때 임시 저장하고, 색상을 바꾸면 해당 선택도 저장합니다.
-화면의 `임시 저장됨` 표시를 확인하면 다음 접속에서 저장된 단계부터 이어갈 수 있습니다.
-설정 완료와 캐릭터 생성은 함께 저장되며, 반복/동시 완료 요청에도 계정당 캐릭터는 하나입니다.
-완료 후 닉네임/색상 변경 화면은 후속 단계입니다.
-A의 효과 지급 서버 함수는 공부→책, 교류→하트, 운동→아령, 문화→팔레트, 일상→별을 처리합니다.
-새 기록마다 해당 효과 레벨이 1씩 증가하고, 같은 기록의 중복/동시 처리는 한 번만 지급합니다.
-효과 목록은 캐릭터 조회와 기본 화면에서 표시합니다.
-**B의 기록 분석 후 자동 호출은 아직 연결하지 않았으므로, 현재 글 저장만으로는 효과가 지급되지 않습니다.**
-B의 연결 예제와 지급 실패 복구 방법은 [API 규약](docs/api-contract.md)에 있습니다.
-다섯 효과를 함께 소유할 수 있으며 강화·중복 방지·실패 복구 규칙은 동일합니다.
-현재 기록 분석은 입력과 무관한 고정 mock 응답입니다. 실제 AI·비동기 처리·분석 재시도는 B의 구현 대상입니다.
-사진·칭호·라운지·Phaser도 후속 단계입니다. API 키 없이 실행됩니다.
+- [공통 API·저장 규약](docs/api-contract.md)
+- [C의 화면 연결 규약](docs/frontend-contract.md)
+- [설치·DB·환경 관리](docs/development.md)
+- [Git 협업 절차](docs/collaboration.md)
+- [진행 상황](docs/tasks.md)
 
-## 협업 문서
-
-- [Git 브랜치·pull/push·PR 절차](docs/collaboration.md)
-- [공통 API·데이터·효과 연결 규약](docs/api-contract.md)
-- [DB 마이그레이션·환경 관리](docs/development.md)
-- [단계별 작업 목록](docs/tasks.md)
-
-FastAPI 모듈 분리·테스트와 Alembic 구성은 공식 문서를 참고했습니다:
-[FastAPI](https://fastapi.tiangolo.com/tutorial/bigger-applications/),
-[테스트](https://fastapi.tiangolo.com/tutorial/testing/),
-[Alembic](https://alembic.sqlalchemy.org/en/latest/tutorial.html).
-
-## B? ????? ???
-
-[?? ?? ???](prototypes/records-analysis/README.md)?? Gemini ?? ???? ??? ??, ??? ?? ?? ??, ?? ??? ?????? ??? ? ????. ?? ??? ??? ? ??? ?? ?? ??? ?????. ?? ?? ?? ???DB?? ?? ???? ?????.
+사용자가 다음 단계를 요청할 때만 다음 기능을 시작합니다.
+단계 완료 후 커밋·pull·필요한 병합/검증·A 브랜치 push를 진행합니다.

@@ -8,7 +8,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 PROTOTYPE = Path(__file__).resolve().parents[3] / "prototypes" / "records-analysis"
-PACKAGE = "campus_web_preview"
+PACKAGE = "campus_records_prototype"
 load_dotenv(PROTOTYPE.parents[1] / ".env")
 
 if PACKAGE not in sys.modules:

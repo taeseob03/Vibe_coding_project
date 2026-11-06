@@ -61,11 +61,14 @@
       <button id="character-refresh" type="button">캐릭터 다시 불러오기</button>
     </section>
     <section id="record-section" aria-labelledby="record-heading" hidden>
-      <h2 id="record-heading">B · 기록과 분석</h2>
+      <h2 id="record-heading">내 대학생활 기록</h2>
       <form id="record-form">
         <label for="record-text">오늘의 대학생활</label>
-        <textarea id="record-text" required maxlength="10000" rows="4"></textarea>
-        <button type="submit">임시 분석으로 저장</button>
+        <textarea id="record-text" maxlength="5000" rows="4"></textarea>
+        <label for="record-image">사진 한 장 (선택)</label>
+        <input id="record-image" type="file" accept="image/jpeg,image/png,image/webp">
+        <img id="record-preview" class="record-thumbnail" alt="선택한 사진 미리보기" hidden>
+        <button type="submit">기록 저장하고 분석하기</button>
       </form>
       <p id="message" role="status" aria-live="polite"></p>
       <button id="refresh" type="button">목록 새로고침</button>
@@ -74,6 +77,6 @@
     <p><a href="/docs">API 문서</a></p>
   </main>
   <noscript>이 앱을 사용하려면 브라우저에서 JavaScript를 켜 주세요.</noscript>
-  <script type="module" src="/shared/main.js?v=local-web-1"></script>
+  <script type="module" src="/static/shared/main.js?v=integrated-2"></script>
 </body>
 </html>

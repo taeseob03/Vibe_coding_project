@@ -13,21 +13,28 @@ dependencies = [
   "sqlalchemy>=2.0,<3",
   "alembic>=1.14,<2",
   "pydantic-settings>=2.7,<3",
+  "google-genai>=2.34,<3",
+  "python-multipart>=0.0.20,<1",
+  "pillow>=11,<13",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.4,<10", "httpx>=0.28,<1", "ruff>=0.11,<1"]
 preview = ["google-genai>=2.34,<3", "python-multipart>=0.0.20,<1", "pillow>=11,<13"]
 
-[tool.setuptools.packages.find]
-where = ["backend"]
-include = ["app*"]
+[tool.setuptools]
+packages = ["app", "app.accounts", "app.analysis", "app.characters", "app.core", "app.records", "app.integrations", "app.preview", "campus_records_prototype"]
+
+[tool.setuptools.package-dir]
+app = "backend/app"
+campus_records_prototype = "prototypes/records-analysis/app"
 
 [tool.pytest.ini_options]
 testpaths = ["backend/tests"]
 addopts = "--disable-plugin-autoload"
 
 [tool.ruff]
+extend-exclude = ["prototypes"]
 line-length = 100
 target-version = "py312"
 

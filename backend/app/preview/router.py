@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, RedirectResponse, Response
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
@@ -17,6 +17,8 @@ from app.accounts.models import User
 from app.characters.models import Character
 from app.core.config import get_settings
 from app.core.db import get_db
+from app.integrations.router import save_input
+from app.integrations.state_store import apply_saved_state, current_stats
 from app.preview.bridge import PROTOTYPE, progress, routes
 from app.preview.posts import claim_analysis, prepare_post
 
@@ -91,8 +93,8 @@ def me(user: AuthenticatedUser, db: Database):
 async def current_progress(user: AuthenticatedUser, db: Database):
     require_development()
     profile(db, user.id)
-    with progress.use_database(user_database(user.id)):
-        return {"progress": await run_in_threadpool(progress.state)}
+    character = db.scalar(select(Character).where(Character.user_id == user.id))
+    return {"progress": current_stats(character)}
 
 
 @router.post("/api/keywords")
@@ -105,6 +107,11 @@ async def post_record(
 ):
     require_development()
     profile(db, user.id)
+    db.execute(update(Character).where(Character.user_id == user.id).values(color=Character.color))
+    character = db.scalar(select(Character).where(Character.user_id == user.id))
+    db.refresh(character)
+    character.stats = current_stats(character)
+    db.commit()
     text = text.strip()
     if len(text) > 5000:
         raise HTTPException(400, "글은 5,000자 이하로 입력해 주세요.")
@@ -127,12 +134,13 @@ async def post_record(
         if post.analysis_status == "completed" and post.analysis_data:
             return {
                 **post.analysis_data,
-                "progress": await run_in_threadpool(progress.state),
+                "progress": current_stats(character),
                 "awarded": False,
                 "stack_changes": {},
                 "post_id": post.id,
             }
         claim_analysis(db, post)
+        activity, _ = save_input(db, user.id, str(record_id), text, data, mime)
         upload = (
             UploadFile(
                 file=io.BytesIO(data), filename="photo", headers=Headers({"content-type": mime})
@@ -141,14 +149,57 @@ async def post_record(
             else None
         )
         try:
-            result = await routes.keywords(text=text, image=upload, record_id=record_id)
-            payload = {**result.model_dump(), "post_id": post.id}
+            before = {item["category"]: item["count"] for item in current_stats(character)}
+            already_applied = activity.stat_status in {"applied", "skipped"}
+            if activity.status == "completed" and activity.analysis_data:
+                from app.preview.bridge import analysis
+
+                result_data = analysis.KeywordResult.model_validate(
+                    activity.analysis_data
+                ).model_dump()
+            else:
+                result = await routes.keywords(text=text, image=upload, record_id=record_id)
+                result_data = result.model_dump()
+                activity.status = "completed"
+                from app.preview.bridge import analysis
+
+                activity.analysis_data = {
+                    key: result_data[key] for key in analysis.KeywordResult.model_fields
+                }
+                activity.analysis_error = None
+                db.commit()
+            stats = await run_in_threadpool(apply_saved_state, user.id, activity.id)
+            db.expire_all()
+            changes = (
+                {
+                    item["category"]: item["count"] - before[item["category"]]
+                    for item in stats
+                    if item["count"] != before[item["category"]]
+                }
+                if not already_applied
+                else {}
+            )
+            payload = {
+                **result_data,
+                "post_id": post.id,
+                "record_id": str(record_id),
+                "progress": current_stats(db.get(Character, character.id)),
+                "awarded": bool(changes),
+                "stack_changes": changes,
+            }
             post.analysis_status = "completed"
             post.analysis_data = payload
             db.commit()
             return payload
         except Exception:
             db.rollback()
+            db.refresh(activity)
+            if activity.status != "completed":
+                activity.status = "failed"
+                activity.analysis_error = {
+                    "code": "ANALYSIS_FAILED",
+                    "message": "분석에 실패했습니다. 다시 시도해 주세요.",
+                }
             post.analysis_status = "failed"
             db.commit()
             raise
