@@ -49,9 +49,9 @@ make migrate
 
 - `.env`는 로컬 비밀 설정이며 Git에 올리지 않습니다.
 - `.env.example`만 공유합니다. API 키는 서버 환경에서만 읽습니다.
-- `accounts/dependencies.py`가 B의 인증 연결점입니다. B는 이를 재사용합니다.
+- `accounts/dependencies.py`가 B의 인증 연결점입니다. B는 이를 재사용합니다. 현재는 아이디 접속의 DB 세션 쿠키를 검증합니다.
 - 임시 인증은 `APP_ENV=development`, `DEV_AUTH_ENABLED=true` 모두 필요합니다.
-- 실제 계정 2개 검증은 실제 인증 구현 후 수행합니다. 현재는 테스트에서 dependency override로 소유자 분리를 검증합니다.
+- 두 아이디의 실제 접속으로 기록·프로필·캐릭터 소유자 분리를 테스트합니다. B의 명시적 임시 인증 옵션도 유지합니다.
 
 ## 검증과 CI
 
@@ -64,3 +64,33 @@ GitHub Actions에서는 별도 DB로 migration upgrade/downgrade와 모델 일�
 [FastAPI 모듈 구성](https://fastapi.tiangolo.com/tutorial/bigger-applications/),
 [FastAPI 테스트](https://fastapi.tiangolo.com/tutorial/testing/),
 [Alembic 마이그레이션](https://alembic.sqlalchemy.org/en/latest/tutorial.html).
+
+## 아이디 접속·최초 설정·효과 지급
+
+`.env.example`의 `DEV_AUTH_ENABLED=false`가 기본입니다. 기존 `.env`도 false로 바꾸면 접속 화면이 표시됩니다.
+접속 아이디를 알면 누구나 같은 계정을 사용할 수 있으며 비밀번호/이메일 인증은 없습니다.
+세션 토큰은 HttpOnly 쿠키에, 해시는 서버 DB에 저장됩니다.
+`SESSION_MAX_AGE`는 초 단위로 기본 604800(7일), 허용 범위 60~2592000입니다.
+개발 외 환경의 쿠키에는 Secure가 적용되므로 HTTPS가 필요합니다.
+다른 Origin의 변경 요청은 차단하며 프록시 배포 시 서버가 인식하는 scheme/host를 외부 주소와 맞춥니다.
+
+`0002`는 아이디/세션, `0003`은 최초 설정/캐릭터, `0004`는 효과/지급 내역을 추가합니다.
+기존 사용자와 기록을 보존합니다. 기존 임시 사용자의 기록을 새 아이디로 자동 이전하지 않습니다.
+닉네임은 2~12자로 별도 입력하고 임시 캐릭터 색상을 선택합니다.
+설정 완료 상태와 캐릭터 생성을 하나의 트랜잭션으로 저장하며 계정당 캐릭터는 하나입니다.
+캐릭터는 CSS 임시 도형입니다. 최종 이미지/Phaser는 B의 디자인 단계에서 교체합니다.
+
+효과는 공부→책, 교류→하트, 운동→아령, 문화→팔레트, 일상→별입니다.
+첫 획득은 1레벨이며 새 기록마다 해당 효과가 1레벨씩 오릅니다.
+효과 호출 전에 B가 기록과 분석을 commit해야 합니다. A의 함수가 자체 세션으로 원자적으로 지급합니다.
+기록/캐릭터 잠금과 기록별 지급 PK로 동시 처리·중복을 방지합니다. 검증 DB는 SQLite입니다.
+B의 분석 완료 후 자동 호출은 아직 연결하지 않았습니다.
+호출 순서와 실패 복구 예제는 [API 규약](api-contract.md)을 참고하세요.
+쿠키 동작은 [Starlette 공식 문서](https://starlette.dev/responses/)를 참고했습니다.
+
+## 단계 진행·Git 동기화
+
+사용자가 다음 단계로 넘어가라고 명시적으로 요청할 때만 다음 단계의 구현을 시작합니다.
+현재 단계 완료 후에는 검증된 변경을 로컬 커밋으로 보존하고 현재 기능 브랜치의 원격을 pull합니다.
+공통 main의 변경도 필요 시 병합합니다. 충돌은 양쪽 기능을 보존하며 해결하고 변경이 생기면 다시 검증합니다.
+원격 작업 브랜치가 없으면 origin/main을 pull하여 기반 변경만 반영합니다. push는 별도 요청 시 수행합니다.
