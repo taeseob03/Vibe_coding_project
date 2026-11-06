@@ -209,7 +209,7 @@ input[type=radio], input[type=checkbox] { accent-color: var(--accent); }
 /* Lounge frame and invitation panels. */
 .lounge-toolbar { gap: 14px; }
 .lounge-toolbar select { border-color: var(--frame); }
-#lounge { border: 3px solid var(--frame); border-radius: 0; box-shadow: 4px 4px 0 var(--frame-light); }
+#lounge { border: 3px solid var(--frame); border-radius: 0; box-shadow: 4px 4px 0 var(--frame-light); image-rendering: pixelated; background: #adc187; }
 .member-chip { border: 1px solid var(--frame-light); border-radius: 0; background: var(--parchment); color: var(--ink); }
 .demo-tools { border-top: 2px dashed var(--frame-light); color: var(--muted-ink); }
 .demo-tools summary { color: var(--muted-ink); }

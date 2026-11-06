@@ -74,7 +74,7 @@ function renderMe() {
   updateLounge();
 }
 function updateLounge() {
-  lounge.setPeople(members.map(user => user.id === me?.id ? { ...user, counts: countsFromProgress(progress) } : user));
+  lounge.setPeople(members.map(user => user.id === me?.id ? { ...user, ...me, counts: countsFromProgress(progress) } : user));
 }
 async function loadProfile() {
   try {
@@ -162,7 +162,7 @@ async function loadSocial() {
     select.disabled=!rooms.length;
     $('#open-friends').disabled=!currentRoom||rooms.find(room=>room.id===currentRoom)?.owner_id!==me?.id;
     status('#room-status',members.length+'명이 함께 있어요 · 수락한 친구가 표시됩니다.');
-    $('#room-members').replaceChildren(...members.map(user=>{const chip=document.createElement('span');chip.className='member-chip';chip.textContent=(user.emoji || '🧑')+' '+user.nickname+(user.id===me?.id?' (나)':'');return chip;}));
+    $('#room-members').replaceChildren(...members.map(user=>{const chip=document.createElement('span');chip.className='member-chip';chip.textContent=user.nickname+(user.id===me?.id?' (나)':'');return chip;}));
     updateLounge();renderInvitations();
   } catch(error){status('#room-status',error.message,true);$('#open-friends').disabled=true;throw error;}
 }

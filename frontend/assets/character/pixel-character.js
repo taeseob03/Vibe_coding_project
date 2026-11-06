@@ -225,7 +225,7 @@ const SPRITES = {
 };
 const BOOK_COLORS = [['#3c6ad2', '#2a4c9c'], ['#d2483c', '#9c2f26'], ['#3caa6a', '#277a4a']];
 
-function drawSprite(ctx, key, x, y, p, override) {
+export function drawSprite(ctx, key, x, y, p, override) {
   const s = SPRITES[key], pal = { ...s.pal, ...override };
   s.rows.forEach((row, ry) => [...row].forEach((ch, rx) => {
     if (ch === '.') return;

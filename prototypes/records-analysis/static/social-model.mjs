@@ -2,9 +2,9 @@
 export const DEMO_ME = 'user-1';
 export const DEMO_USERS = [
   { id: DEMO_ME, nickname: '나', emoji: '🧑', counts: { '술': 0, '공부': 0, '연애': 0, '운동': 0 } },
-  { id: 'user-2', nickname: '민지', emoji: '👩', counts: { '술': 2, '공부': 7, '연애': 5, '운동': 0 } },
-  { id: 'user-3', nickname: '준호', emoji: '👨', counts: { '술': 0, '공부': 3, '연애': 1, '운동': 10 } },
-  { id: 'user-4', nickname: '서연', emoji: '👩‍🎓', counts: { '술': 1, '공부': 10, '연애': 0, '운동': 4 } },
+  { id: 'user-2', nickname: '민지', emoji: '👩', major: 'embedded', appearance: { base: 'female', hair_length: 'long', hair_color: 'brown' }, counts: { '술': 2, '공부': 7, '연애': 5, '운동': 0 } },
+  { id: 'user-3', nickname: '준호', emoji: '👨', major: 'computer', appearance: { base: 'male', hair_length: 'short', hair_color: 'black' }, counts: { '술': 0, '공부': 3, '연애': 1, '운동': 10 } },
+  { id: 'user-4', nickname: '서연', emoji: '👩‍🎓', major: 'ict', appearance: { base: 'female', hair_length: 'medium', hair_color: 'pink' }, counts: { '술': 1, '공부': 10, '연애': 0, '운동': 4 } },
 ];
 
 export function initialSocialState() {
