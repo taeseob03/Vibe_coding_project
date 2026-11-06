@@ -1,5 +1,7 @@
 from alembic import context
 from app.accounts.models import User  # noqa: F401
+from app.characters.effect_models import CharacterEffect, EffectGrant  # noqa: F401
+from app.characters.models import Character  # noqa: F401
 from app.core.config import get_settings
 from app.core.db import Base
 from app.records.models import Record  # noqa: F401

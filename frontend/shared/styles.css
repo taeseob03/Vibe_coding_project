@@ -8,3 +8,20 @@ button { padding: 10px 16px; cursor: pointer; }
 button:disabled { cursor: wait; }
 li { padding: 10px 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 a { color: #23583e; }
+
+[hidden] { display: none !important; }
+input { display: block; width: 100%; margin: 12px 0; padding: 12px; font: inherit; }
+
+.color-options { display: flex; flex-wrap: wrap; gap: 16px; border: 1px solid #c9d5cb; padding: 16px; }
+.color-options label { width: auto; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.color-options input { width: auto; margin: 0; }
+.character-figure { display: grid; justify-items: center; margin: 24px 0; }
+.campus-avatar { width: 112px; height: 112px; border: 3px solid #24362c; border-radius: 46% 46% 40% 40%; position: relative; background: var(--avatar-color); }
+.campus-avatar::before, .campus-avatar::after { content: ''; position: absolute; top: 40px; width: 8px; height: 12px; background: #24362c; border-radius: 50%; }
+.campus-avatar::before { left: 30px; }
+.campus-avatar::after { right: 30px; }
+.color-green { --avatar-color: #91cfa0; }
+.color-blue { --avatar-color: #96c5ed; }
+.color-yellow { --avatar-color: #f1d878; }
+.color-pink { --avatar-color: #eeb0c3; }
+.color-purple { --avatar-color: #c4ade5; }

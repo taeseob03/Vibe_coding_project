@@ -63,7 +63,7 @@ def test_record_validation(client, body):
 
 
 def test_unimplemented_features_are_explicit(client):
-    assert client.get("/characters/me").status_code == 501
+    assert client.get("/characters/me").status_code == 404
     record = client.post("/records", json={"text": "기록"}).json()
     assert client.post(f"/records/{record['id']}/retry").status_code == 501
 

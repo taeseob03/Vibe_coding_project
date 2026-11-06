@@ -3,19 +3,63 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>캠퍼스 캐릭터 · 개발 환경</title>
+  <title>캠퍼스 캐릭터</title>
   <link rel="stylesheet" href="/shared/styles.css">
 </head>
 <body>
   <main>
     <h1>캠퍼스 캐릭터</h1>
     <p>팀 개발 환경 확인 화면 · 고정된 임시 분석을 사용합니다.</p>
-    <p id="account" role="status">사용자 확인 중…</p>
-    <section aria-labelledby="character-heading">
-      <h2 id="character-heading">A · 계정과 캐릭터</h2>
-      <div id="character"></div>
+    <section aria-labelledby="account-heading">
+      <h2 id="account-heading">아이디로 시작하기</h2>
+      <p>처음 입력한 아이디는 새 계정이 되고, 다시 입력하면 이어서 사용할 수 있어요.</p>
+      <p>비밀번호 없는 접속입니다. 아이디를 아는 사람은 같은 계정을 사용할 수 있어요.</p>
+      <p id="account" role="status" aria-live="polite">접속 상태 확인 중…</p>
+      <form id="login-form" hidden>
+        <label for="username">아이디</label>
+        <input id="username" name="username" required minlength="2" maxlength="20"
+          autocomplete="username" autocapitalize="none" spellcheck="false"
+          aria-describedby="username-help">
+        <p id="username-help">한글·영문·숫자·밑줄 2~20자. 영문 대소문자는 구분하지 않아요.</p>
+        <button type="submit">시작하기 / 이어하기</button>
+      </form>
+      <button id="logout" type="button" hidden>로그아웃</button>
     </section>
-    <section aria-labelledby="record-heading">
+    <section id="setup-section" aria-labelledby="setup-heading" hidden>
+      <h2 id="setup-heading">내 캐릭터 만들기</h2>
+      <p id="setup-status" role="status" aria-live="polite"></p>
+      <button id="setup-retry" type="button" hidden>설정 다시 불러오기</button>
+      <form id="setup-form" data-step="nickname" hidden>
+        <div id="nickname-step">
+          <h3>1. 캐릭터의 이름</h3>
+          <label for="nickname">닉네임</label>
+          <input id="nickname" name="nickname" maxlength="12" autocomplete="nickname"
+            aria-describedby="nickname-help">
+          <p id="nickname-help">앞뒤 공백을 제외하고 2~12자. 접속 아이디와 다른 이름을 쓸 수 있어요.</p>
+          <button id="setup-next" type="button">저장하고 색상 선택하기</button>
+        </div>
+        <div id="color-step" hidden>
+          <h3>2. 캐릭터의 색상</h3>
+          <fieldset class="color-options">
+            <legend>기본 색상을 선택하세요</legend>
+            <label><input type="radio" name="color" value="green">초록</label>
+            <label><input type="radio" name="color" value="blue">파랑</label>
+            <label><input type="radio" name="color" value="yellow">노랑</label>
+            <label><input type="radio" name="color" value="pink">분홍</label>
+            <label><input type="radio" name="color" value="purple">보라</label>
+          </fieldset>
+          <div id="setup-preview"></div>
+          <button id="setup-back" type="button">닉네임 수정하기</button>
+          <button id="setup-complete" type="submit">완료하고 시작하기</button>
+        </div>
+      </form>
+    </section>
+    <section id="character-section" aria-labelledby="character-heading" hidden>
+      <h2 id="character-heading">내 캐릭터</h2>
+      <div id="character" aria-live="polite"></div>
+      <button id="character-refresh" type="button">캐릭터 다시 불러오기</button>
+    </section>
+    <section id="record-section" aria-labelledby="record-heading" hidden>
       <h2 id="record-heading">B · 기록과 분석</h2>
       <form id="record-form">
         <label for="record-text">오늘의 대학생활</label>

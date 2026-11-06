@@ -1,7 +1,7 @@
 from functools import lru_cache
 from uuid import UUID
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     app_env: str = "development"
     dev_auth_enabled: bool = False
     dev_user_id: UUID = UUID("00000000-0000-4000-8000-000000000001")
+    session_cookie_name: str = "campus_session"
+    session_max_age: int = Field(default=604800, ge=60, le=2592000)
     database_url: str = "sqlite:///./backend/data/campus.db"
 
     @model_validator(mode="after")
