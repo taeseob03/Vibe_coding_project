@@ -2,6 +2,7 @@
 export const config = {
   socialMode: 'demo', // 'server' uses authenticated HTTP endpoints; never silently falls back to demo.
   profileMode: 'demo',
+  feedMode: 'disabled',
   profileUrl: '/api/me',
   progressUrl: '/api/progress',
   postUrl: '/api/keywords',

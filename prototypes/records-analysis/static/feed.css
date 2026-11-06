@@ -1,0 +1,29 @@
+.screen .page[aria-hidden="true"] { display: none; }
+.screen .page[aria-hidden="false"] { transform: none; visibility: visible; }
+.screen[data-view="feed"] .feed-page { animation: feed-arrive .2s ease-out; }
+@keyframes feed-arrive { from { transform: translateX(24px); opacity: .5; } to { transform: none; opacity: 1; } }
+.feed-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 24px 0 16px; }
+.feed-toolbar select { flex: 1; min-width: 110px; }
+.feed-toolbar button { font-size: 12px; }
+.feed-list { display: grid; gap: 24px; }
+.feed-card { width: 100%; max-width: 650px; margin: 0 auto; background: var(--paper, #fff8ed); border: 2px solid var(--frame-light, #ddc5a4); box-shadow: 4px 4px 0 var(--pixel-shadow, #c9ac87); overflow: hidden; }
+.feed-card-header { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; padding: 14px 18px; background: var(--parchment, #efdfc6); border-bottom: 2px solid var(--frame-light, #ddc5a4); flex-wrap: wrap; }
+.feed-card time { font-size: 11px; color: var(--muted-ink, #836b57); }
+.feed-photo { display: block; width: 100%; height: auto; max-height: 650px; object-fit: contain; background: #f1e7d8; }
+.feed-caption { padding: 14px 18px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.feed-tags { margin: 16px 18px; }
+.feed-analysis-status { margin: 12px 18px; }
+#more-feed { display: block; margin: 24px auto 8px; }
+#post-result > button { margin: 6px 8px 6px 0; }
+#contact-results { margin-bottom: 20px; }
+#contacts-dialog h3 { border-bottom: 2px dashed var(--frame-light, #ddc5a4); padding-bottom: 8px; margin-top: 24px; }
+@media(max-width: 520px) {
+  .feed-toolbar { gap: 8px; }
+  .feed-toolbar button { padding: 8px 10px; }
+  .feed-card-header { padding: 12px; }
+  .feed-caption { padding: 12px 12px 0; }
+  .feed-tags { margin: 12px; }
+  .page-nav { gap: 8px; }
+  .page-nav button { padding-left: 10px; padding-right: 10px; }
+}
+@media(prefers-reduced-motion: reduce) { .screen[data-view="feed"] .feed-page { animation: none; } }

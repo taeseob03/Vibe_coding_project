@@ -1,21 +1,6 @@
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
-import pytest
-from app.core.config import get_settings
-from fastapi.testclient import TestClient
-
-
-@pytest.fixture
-def web_client(client, monkeypatch):
-    monkeypatch.setenv("DEV_AUTH_ENABLED", "false")
-    monkeypatch.setenv("LOCAL_WEB_PREVIEW_ENABLED", "true")
-    get_settings.cache_clear()
-    from app.main import create_app
-
-    with TestClient(create_app()) as preview:
-        yield preview
-
 
 def login(client, username="local_test", nickname="테스트친구"):
     result = client.post("/auth/login", json={"username": username})

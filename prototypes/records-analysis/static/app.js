@@ -2,51 +2,60 @@ import { api } from './api.mjs';
 import { config } from './app-config.mjs';
 import { assets, renderCharacter, countsFromProgress } from './character.mjs';
 import { createLounge } from './lounge-view.mjs';
+import { createFeed } from './feed.mjs';
 
 const $ = selector => document.querySelector(selector);
 const lounge = createLounge($('#lounge'));
 let me, progress = [], rooms = [], invitations = [], members = [], currentRoom, searchResults = [];
-let view = new URLSearchParams(location.search).get('view') === 'lounge' ? 'lounge' : 'home';
+const views = ['lounge', 'home', 'feed'];
+const requestedView = new URLSearchParams(location.search).get('view');
+let view = views.includes(requestedView) ? requestedView : 'home';
+let feedController;
 let socialRevision = 0, searching = 0, recordId = crypto.randomUUID(), previewUrl, busy = false, posted = false;
 const status = (selector, message, error = false) => { $(selector).textContent = message; $(selector).classList.toggle('error', error); };
 
 function showView(next) {
   view = next;
   $('#screen').dataset.view = next;
-  for (const name of ['home', 'lounge']) {
+  for (const name of views) {
     const active = name === next;
     $('#' + name + '-panel').inert = !active;
     $('#' + name + '-panel').setAttribute('aria-hidden', String(!active));
     if (active) $('#' + name + '-tab').setAttribute('aria-current', 'page');
     else $('#' + name + '-tab').removeAttribute('aria-current');
   }
+  if(next==='feed' && me)feedController?.load();
 }
 $('#home-tab').onclick = () => showView('home');
 $('#lounge-tab').onclick = () => showView('lounge');
+$('#feed-tab').onclick = () => showView('feed');
+function swipe(dx, origin) {
+  const index=views.indexOf(origin)+(dx>0?-1:1);
+  showView(views[Math.max(0,Math.min(views.length-1,index))]);
+}
 showView(view);
 let touch;
 $('#screen').addEventListener('pointerdown', event => {
   if (event.pointerType !== 'touch' || event.target.closest('button,input,textarea,select,a,summary,details')) return;
-  touch = { x: event.clientX, y: event.clientY };
+  touch = { x: event.clientX, y: event.clientY, view };
 });
 window.addEventListener('pointerup', event => {
   if (!touch) return;
-  const dx = event.clientX - touch.x, dy = event.clientY - touch.y; touch = undefined;
+  const dx = event.clientX - touch.x, dy = event.clientY - touch.y, origin=touch.view; touch = undefined;
   if (Math.abs(dx) < 65 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-  if (dx > 0 && view === 'home') showView('lounge');
-  if (dx < 0 && view === 'lounge') showView('home');
+  swipe(dx,origin);
 });
 window.addEventListener('pointercancel', () => { touch = undefined; });
 // Vertical browser scrolling can cancel a pointer gesture; touch endpoints retain the swipe direction.
 let startTouch;
 $('#screen').addEventListener('touchstart', event => {
   if (event.touches.length !== 1 || event.target.closest('button,input,textarea,select,a,summary,details')) { startTouch = undefined; return; }
-  startTouch = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+  startTouch = { x: event.touches[0].clientX, y: event.touches[0].clientY, view };
 }, { passive: true });
 $('#screen').addEventListener('touchend', event => {
   if (!startTouch || !event.changedTouches.length) return;
-  const dx = event.changedTouches[0].clientX-startTouch.x, dy = event.changedTouches[0].clientY-startTouch.y; startTouch=undefined; touch=undefined;
-  if (Math.abs(dx)>65 && Math.abs(dx)>Math.abs(dy)*1.5) showView(dx>0?'lounge':'home');
+  const dx = event.changedTouches[0].clientX-startTouch.x, dy = event.changedTouches[0].clientY-startTouch.y, origin=startTouch.view; startTouch=undefined; touch=undefined;
+  if (Math.abs(dx)>65 && Math.abs(dx)>Math.abs(dy)*1.5) swipe(dx,origin);
 }, { passive: true });
 $('#screen').addEventListener('touchcancel', () => { startTouch=undefined; });
 
@@ -75,6 +84,7 @@ async function loadProfile() {
     $('#open-post').disabled=false;renderMe();
     status('#global-status','');$('#reload').hidden=true;
     await loadSocial();
+    if(view==='feed')feedController.load();
   } catch (error) {
     status('#global-status',error.message,true);$('#reload').hidden=false;
   }
@@ -216,6 +226,8 @@ $('#open-post').onclick=()=>{if(posted)resetPost();$('#post-dialog').showModal()
 $('#close-post').onclick=()=>{if(!busy)$('#post-dialog').close();};
 $('#post-dialog').addEventListener('cancel',event=>{if(busy)event.preventDefault();});
 $('#show-character').onclick=()=>{$('#post-dialog').close();showView('home');};
+$('#show-feed').hidden=config.feedMode!=='server';
+$('#show-feed').onclick=()=>{$('#post-dialog').close();showView('feed');};
 $('#post-form').addEventListener('input',()=>{recordId=crypto.randomUUID();});
 $('#post-image').onchange=()=>{
   clearPreview();const image=$('#post-image').files[0];if(!image)return;
@@ -247,5 +259,6 @@ $('#post-form').onsubmit=async event=>{
   }catch(error){status('#post-status',error.message+' 입력은 유지되어 있어요.',true);}
   finally{busy=false;$('#post-fields').disabled=false;$('#close-post').disabled=false;$('#post-form').setAttribute('aria-busy','false');}
 };
+feedController=createFeed({api,config});
 loadProfile();
 

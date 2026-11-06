@@ -2,19 +2,20 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>캠퍼스 · 내 캐릭터와 라운지</title>
+<title>INUstagram · 내 캐릭터와 친구들의 기록</title>
 <link rel="stylesheet" href="/static/style.css">
 <link rel="stylesheet" href="/static/pixel-theme.css?v=1">
+<link rel="stylesheet" href="/static/feed.css?v=1">
 <script src="/api/frontend-config.js"></script>
 <script type="module" src="/static/app.js"></script>
 </head>
 <body>
 <div class="app-shell">
-<header class="app-header"><strong>🌱 캠퍼스</strong><span id="profile-name">내 캐릭터</span><button id="logout-app" class="text-button" hidden>로그아웃</button></header>
-<nav class="page-nav" aria-label="앱 화면"><button id="home-tab" aria-current="page">내 캐릭터</button><button id="lounge-tab">라운지 <span id="invite-badge" hidden></span></button></nav>
+<header class="app-header"><strong>INUstagram</strong><span id="profile-name">내 캐릭터</span><button id="logout-app" class="text-button" hidden>로그아웃</button></header>
+<nav class="page-nav" aria-label="앱 화면"><button id="lounge-tab">라운지 <span id="invite-badge" hidden></span></button><button id="home-tab" aria-current="page">내 캐릭터</button><button id="feed-tab">피드</button></nav>
 <p id="global-status" class="global-status" role="status" aria-live="polite">캐릭터를 불러오고 있어요…</p>
 <button id="reload" class="text-button" hidden>다시 불러오기</button>
-<main id="screen" class="screen" data-view="home" aria-label="내 캐릭터와 라운지">
+<main id="screen" class="screen" data-view="home" aria-label="라운지, 내 캐릭터와 게시물 피드">
 <section id="home-panel" class="page home-page" aria-labelledby="home-title">
 <div class="section-heading"><p class="eyebrow">MY CAMPUS LIFE</p><h1 id="home-title">오늘의 내가 쌓이는 곳</h1><p>작은 기록 하나가 캐릭터를 바꿔요.</p></div>
 <div class="character-stage"><span class="stage-decoration" aria-hidden="true">🌿</span><div id="main-character" class="main-character" role="img" aria-label="내 캐릭터와 누적 효과"><span class="character-body">🧑</span></div><div class="character-ground"></div></div>
@@ -22,7 +23,7 @@
 <div id="activity-counts" class="activity-counts" aria-label="활동별 누적 횟수"></div>
 <p class="stack-rule">술 기록은 술 +1, 운동 스택 −1 · 운동 스택은 0 아래로 내려가지 않아요.</p>
 <button id="open-post" class="post-button">＋ 게시</button>
-<p class="swipe-hint">오른쪽으로 밀면 친구들의 라운지가 나와요 →</p>
+<p class="swipe-hint">← 오른쪽으로 밀면 라운지 · 왼쪽으로 밀면 게시물 피드 →</p>
 </section>
 <section id="lounge-panel" class="page lounge-page" aria-labelledby="lounge-title" aria-hidden="true" inert>
 <div class="section-heading"><p class="eyebrow">TOGETHER ON CAMPUS</p><h1 id="lounge-title">친구들과 머무는 라운지</h1></div>
@@ -34,8 +35,15 @@
 <button id="open-inbox" class="secondary">받은 초대 <span id="inbox-count">0</span></button>
 <details id="demo-tools" class="demo-tools"><summary>초대 수락 테스트</summary><p>예제 모드에서는 실제 친구에게 알림이 가지 않아요. 친구의 수신함을 열어 수락 과정을 확인할 수 있어요.</p><button id="open-demo" class="secondary">친구의 수신함 열기</button></details>
 </section>
+<section id="feed-panel" class="page feed-page" aria-labelledby="feed-title" aria-hidden="true" inert>
+<div class="section-heading"><p class="eyebrow">INUSTAGRAM / MOMENTS</p><h1 id="feed-title">우리의 캠퍼스 기록</h1><p>나와 친구들의 게시물을 최신순으로 모았어요.</p></div>
+<div class="feed-toolbar"><label for="feed-scope" class="sr-only">게시물 보기</label><select id="feed-scope"><option value="all">나와 친구</option><option value="mine">내 게시물</option><option value="friends">친구 게시물</option></select><button id="open-contacts" class="secondary">친구 등록</button><button id="refresh-feed" class="text-button">새로고침</button></div>
+<p id="feed-status" role="status" aria-live="polite"></p><div id="feed-list" class="feed-list"></div>
+<button id="more-feed" class="secondary" hidden>이전 게시물 더 보기</button>
+<p class="swipe-hint">오른쪽으로 밀면 내 캐릭터로 돌아가요.</p>
+</section>
 </main>
-<footer id="demo-notice" class="app-footer">친구·초대는 예제 모드 · 게시 분석은 실제 AI 사용</footer>
+<footer id="demo-notice" class="app-footer">INUstagram · 캠퍼스에서 쌓이는 우리들의 기록</footer>
 </div>
 
 <dialog id="post-dialog" aria-labelledby="post-title">
@@ -48,7 +56,7 @@
 <button id="submit-post" type="submit">게시하고 캐릭터에 반영</button>
 </fieldset></form>
 <p id="post-status" role="status" aria-live="polite"></p>
-<section id="post-result" class="post-result" hidden><h3>기록이 반영됐어요</h3><div id="result-keywords" class="tags"></div><p id="result-category"></p><p id="result-effect"></p><button id="show-character">캐릭터 확인</button></section>
+<section id="post-result" class="post-result" hidden><h3>기록이 반영됐어요</h3><div id="result-keywords" class="tags"></div><p id="result-category"></p><p id="result-effect"></p><button id="show-character">캐릭터 확인</button><button id="show-feed" class="secondary">피드에서 보기</button></section>
 </dialog>
 
 <dialog id="friends-dialog" aria-labelledby="friends-title">
@@ -67,6 +75,14 @@
 <div class="dialog-heading"><h2 id="demo-title">친구의 수신함 · 테스트</h2><button class="icon-button" id="close-demo" aria-label="테스트 수신함 닫기">✕</button></div>
 <label for="demo-user">수락할 친구</label><select id="demo-user"><option value="user-2">민지</option><option value="user-3">준호</option><option value="user-4">서연</option></select>
 <p id="demo-status" role="status" aria-live="polite"></p><div id="demo-invitations"></div>
+</dialog>
+<dialog id="contacts-dialog" aria-labelledby="contacts-title">
+<div class="dialog-heading"><h2 id="contacts-title">INUstagram 친구</h2><button id="close-contacts" class="icon-button" aria-label="친구 등록 창 닫기">✕</button></div>
+<p class="muted">친구 요청을 수락하면 서로의 게시물을 볼 수 있어요.</p>
+<button id="refresh-contacts" class="text-button" type="button">친구 요청 새로고침</button>
+<form id="contact-search"><label for="contact-query">가입한 친구의 닉네임</label><div class="search-row"><input id="contact-query" type="search" maxlength="30" required placeholder="친구 닉네임"><button type="submit">검색</button></div></form>
+<p id="contact-status" role="status" aria-live="polite"></p><div id="contact-results"></div>
+<h3>받은 친구 요청</h3><div id="contact-incoming"></div><h3>보낸 친구 요청</h3><div id="contact-outgoing"></div><h3>등록된 친구</h3><div id="contact-friends"></div>
 </dialog>
 </body></html>
 

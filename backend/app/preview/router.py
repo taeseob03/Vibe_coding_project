@@ -1,7 +1,8 @@
+import io
 import json
 from pathlib import Path
 from typing import Annotated
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, RedirectResponse, Response
@@ -9,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
+from starlette.datastructures import Headers
 
 from app.accounts.dependencies import AuthenticatedUser, get_current_user
 from app.accounts.models import User
@@ -16,6 +18,7 @@ from app.characters.models import Character
 from app.core.config import get_settings
 from app.core.db import get_db
 from app.preview.bridge import PROTOTYPE, progress, routes
+from app.preview.posts import claim_analysis, prepare_post
 
 router = APIRouter(tags=["local web preview"])
 Database = Annotated[Session, Depends(get_db)]
@@ -69,6 +72,7 @@ def frontend_config(user: AuthenticatedUser, db: Database):
         "socialMode": "demo",
         "demoMe": profile(db, user.id),
         "loginUrl": "/",
+        "feedMode": "server",
     }
     return Response(
         "window.CAMPUS_CONFIG = " + json.dumps(config, ensure_ascii=True) + ";",
@@ -101,5 +105,50 @@ async def post_record(
 ):
     require_development()
     profile(db, user.id)
+    text = text.strip()
+    if len(text) > 5000:
+        raise HTTPException(400, "글은 5,000자 이하로 입력해 주세요.")
+    data, mime = None, None
+    if image is not None:
+        try:
+            data = await image.read(routes.MAX_IMAGE_BYTES + 1)
+        finally:
+            await image.close()
+        if len(data) > routes.MAX_IMAGE_BYTES:
+            raise HTTPException(413, "이미지는 10MB 이하로 올려 주세요.")
+        if not data:
+            raise HTTPException(400, "빈 이미지 파일입니다.")
+        mime = await run_in_threadpool(routes.validate_image, data)
+    if not text and not data:
+        raise HTTPException(400, "글 또는 사진을 하나 이상 올려 주세요.")
+    record_id = record_id or uuid4()
+    post = prepare_post(db, user.id, str(record_id), text, data, mime)
     with progress.use_database(user_database(user.id)):
-        return await routes.keywords(text=text, image=image, record_id=record_id)
+        if post.analysis_status == "completed" and post.analysis_data:
+            return {
+                **post.analysis_data,
+                "progress": await run_in_threadpool(progress.state),
+                "awarded": False,
+                "stack_changes": {},
+                "post_id": post.id,
+            }
+        claim_analysis(db, post)
+        upload = (
+            UploadFile(
+                file=io.BytesIO(data), filename="photo", headers=Headers({"content-type": mime})
+            )
+            if data
+            else None
+        )
+        try:
+            result = await routes.keywords(text=text, image=upload, record_id=record_id)
+            payload = {**result.model_dump(), "post_id": post.id}
+            post.analysis_status = "completed"
+            post.analysis_data = payload
+            db.commit()
+            return payload
+        except Exception:
+            db.rollback()
+            post.analysis_status = "failed"
+            db.commit()
+            raise

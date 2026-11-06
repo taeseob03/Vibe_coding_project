@@ -15,7 +15,7 @@ from app.records.router import router as records_router
 
 def create_app() -> FastAPI:
     get_settings()  # 운영 환경에서 임시 인증을 켜면 시작 단계에서 거부합니다.
-    app = FastAPI(title="Campus Character API", version="0.1.0")
+    app = FastAPI(title="INUstagram", version="0.1.0")
     install_error_handlers(app)
     app.middleware("http")(same_origin_writes)
 
@@ -43,9 +43,11 @@ def create_app() -> FastAPI:
     mimetypes.add_type("application/javascript", ".mjs")
     if get_settings().app_env == "development" and get_settings().local_web_preview_enabled:
         from app.preview.bridge import PROTOTYPE
+        from app.preview.feed import router as feed_router
         from app.preview.router import router as preview_router
 
         app.include_router(preview_router)
+        app.include_router(feed_router)
         app.mount("/static", StaticFiles(directory=PROTOTYPE / "static"), name="web-preview")
     frontend = Path(__file__).resolve().parents[2] / "frontend"
     app.mount("/", StaticFiles(directory=frontend, html=True), name="frontend")

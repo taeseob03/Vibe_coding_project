@@ -51,6 +51,15 @@ export const api = {
   logout() { return request('/auth/logout', { method: 'POST' }); },
   progress() { return request(config.progressUrl); },
   post(body) { return request(config.postUrl, { method: 'POST', body, signal: AbortSignal.timeout(90000) }); },
+  feed(scope, before) {
+    const query = new URLSearchParams({ scope, limit: '12' });
+    if (before) query.set('before', before);
+    return request('/api/feed?' + query);
+  },
+  contacts() { return request('/api/friends'); },
+  findContacts(query) { return request('/api/people?nickname=' + encodeURIComponent(query)); },
+  requestFriend(recipient_id) { return request('/api/friend-requests', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({recipient_id}) }); },
+  respondFriend(id, accept) { return request('/api/friend-requests/' + encodeURIComponent(id) + '/response', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({accept})}); },
   async rooms() {
     if (config.socialMode === 'server') return request(`${config.socialBase}/lounges`);
     return loadDemo().rooms.filter(room => room.member_ids.includes(CURRENT_ID));

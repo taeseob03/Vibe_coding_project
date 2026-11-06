@@ -251,3 +251,20 @@ B가 복구 작업과 화면 재시도 흐름에서 이 함수를 재사용합�
 즉 로그인/설정과 새 웹 화면을 한 주소에서 검증할 수 있지만 최종 저장 구조 통합과는 구분한다.
 개발 모드 판별용 `GET /api/preview-status`와 인증된 브라우저 설정용
 `GET /api/frontend-config.js`에는 API 키가 포함되지 않는다.
+
+### INUstagram 게시물 피드와 실제 친구 등록
+
+- 개발 연결 모드의 `POST /api/keywords`는 먼저 원문·사진을 저장하고, 같은 record_id로 재시도하면 기존 게시물을 사용한다.
+- 응답에 `post_id`가 추가된다. 원본 사진은 MIME·크기를 검증하고 DB BLOB으로 보관한다.
+- 분석 실패 시에도 게시물은 유지된다. 120초 이상 멈춘 processing 기록은 재시도로 처리권을 얻을 수 있다.
+- 성공한 게시물 재요청은 저장된 분석을 반환하고 추가 AI 호출·스택 지급·운동 차감을 하지 않는다.
+- `GET /api/feed?scope=all|mine|friends&limit=12&before=커서`는 `{posts,next_cursor}`를 반환한다.
+- 최신 created_at → 같은 시각이면 id 내림차순이다. 재분석 시 게시 시각을 변경하지 않는다.
+- 각 게시물은 `{id,author:{id,nickname,emoji},text,image_url,keywords,analysis_status,created_at}`이다.
+- AI 요약/이미지 설명은 피드에 반환하거나 표시하지 않는다. text는 사용자가 직접 쓴 글이다.
+- `GET /api/posts/{id}/image`는 로그인한 본인/수락된 친구에게만 이미지를 반환한다. 그 외는 404, 미접속은 401이다.
+- `GET /api/people?nickname=검색어`는 최초 설정을 마친 본인 외 사용자를 최대 20명 반환한다.
+- `GET /api/friends`는 `{friends,incoming,outgoing}`를 반환한다. 대기 요청은 게시물 접근 권한이 없다.
+- `POST /api/friend-requests` 요청은 `{recipient_id:UUID}`이다. 자기 자신·미설정 계정·중복 대기/기존 친구는 거부한다.
+- `POST /api/friend-requests/{id}/response` 요청은 `{accept:bool}`이다. 요청 수신자만 응답할 수 있다.
+- 수락된 쌍방 친구 관계만 피드와 사진 권한에 사용한다. localStorage의 라운지 예제 초대나 클라이언트가 전달하는 친구 ID 목록은 신뢰하지 않는다.

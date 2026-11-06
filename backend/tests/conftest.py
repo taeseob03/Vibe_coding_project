@@ -25,3 +25,14 @@ def client(tmp_path, monkeypatch):
     get_engine().dispose()
     get_engine.cache_clear()
     get_settings.cache_clear()
+
+
+@pytest.fixture
+def web_client(client, monkeypatch):
+    monkeypatch.setenv("DEV_AUTH_ENABLED", "false")
+    monkeypatch.setenv("LOCAL_WEB_PREVIEW_ENABLED", "true")
+    get_settings.cache_clear()
+    from app.main import create_app
+
+    with TestClient(create_app()) as preview:
+        yield preview

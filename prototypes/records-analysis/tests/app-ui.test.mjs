@@ -28,6 +28,11 @@ test('app flow: swipe, nickname search, pending invitation, acceptance, inbox, p
   assert.equal($('#home-panel').getAttribute('aria-hidden'),'false');
   const swipe=(name,x)=>{const event=new win.Event(name,{bubbles:true});Object.defineProperty(event,name==='touchstart'?'touches':'changedTouches',{value:[{clientX:x,clientY:150}]});$('#screen').dispatchEvent(event);};
   swipe('touchstart',30);swipe('touchend',180);assert.equal($('#screen').dataset.view,'lounge');
+  swipe('touchstart',180);swipe('touchend',30);assert.equal($('#screen').dataset.view,'home');
+  swipe('touchstart',180);swipe('touchend',30);assert.equal($('#screen').dataset.view,'feed');
+  assert.equal($('#feed-panel').getAttribute('aria-hidden'),'false');
+  swipe('touchstart',30);swipe('touchend',180);assert.equal($('#screen').dataset.view,'home');
+  $('#lounge-tab').click();
   $('#open-friends').click();$('#friend-query').value='민지';$('#friend-search').dispatchEvent(new win.Event('submit',{bubbles:true,cancelable:true}));
   await until(()=>$('#search-results button'));$('#search-results button').click();
   await until(()=>$('#sent-invitations').textContent.includes('수락 대기'));
