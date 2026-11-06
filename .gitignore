@@ -218,3 +218,22 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Campus app local files
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.env
+.env.*
+!.env.example
+*.db
+*.db-*
+backend/data/*
+!backend/data/.gitkeep
+uploads/
+node_modules/
+dist/
+.DS_Store

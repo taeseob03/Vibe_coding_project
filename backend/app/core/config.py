@@ -1,0 +1,25 @@
+from functools import lru_cache
+from uuid import UUID
+
+from pydantic import model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    app_env: str = "development"
+    dev_auth_enabled: bool = False
+    dev_user_id: UUID = UUID("00000000-0000-4000-8000-000000000001")
+    database_url: str = "sqlite:///./backend/data/campus.db"
+
+    @model_validator(mode="after")
+    def validate_dev_auth(self):
+        if self.dev_auth_enabled and self.app_env != "development":
+            raise ValueError("DEV_AUTH_ENABLED requires APP_ENV=development")
+        return self
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
