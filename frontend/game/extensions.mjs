@@ -1,3 +1,4 @@
+import { renderCharacter } from '/static/characters/index.js';
 import { api, request } from './api.mjs';
 import { config } from './app-config.mjs';
 let historyTimer;
@@ -45,3 +46,26 @@ document.querySelector('#analysis-mode').textContent=config.demoAnalysis?'샘플
 document.querySelector('#sample-options').hidden=!config.demoAnalysis;
 document.querySelector('#gemini-disclosure').textContent=config.demoAnalysis?'샘플 활동을 직접 고르는 체험입니다. 사진을 AI로 분석하지 않습니다.':'글·사진 중 하나 이상 올려 주세요. 입력한 내용은 Google Gemini로 전송됩니다.';
 titles();
+
+const lookDialog=document.querySelector('#look-dialog');
+const lookFields=()=>({grade:Number(document.querySelector('#look-grade').value),major:document.querySelector('#look-major').value,appearance:{base:document.querySelector('#look-base').value,hair_length:document.querySelector('#look-length').value,hair_color:document.querySelector('#look-color').value}});
+const previewLook=()=>{const data=lookFields();renderCharacter(document.querySelector('#look-preview'),'green','미리보기',data.appearance,data.major);};
+document.querySelector('#open-look').onclick=async()=>{
+  try{
+    const profile=await request('/profile/me');
+    document.querySelector('#look-grade').value=profile.grade;
+    document.querySelector('#look-major').value=profile.major;
+    document.querySelector('#look-base').value=profile.appearance.base;
+    document.querySelector('#look-length').value=profile.appearance.hair_length;
+    document.querySelector('#look-color').value=profile.appearance.hair_color;
+    previewLook();lookDialog.showModal();
+  }catch(error){document.querySelector('#global-status').textContent=error.message;}
+};
+document.querySelector('#close-look').onclick=()=>lookDialog.close();
+for(const select of lookDialog.querySelectorAll('select'))select.onchange=previewLook;
+document.querySelector('#look-form').onsubmit=async event=>{
+  event.preventDefault();const button=event.target.querySelector('button[type="submit"]');button.disabled=true;
+  try{await request('/profile/me/appearance',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(lookFields())});lookDialog.close();window.dispatchEvent(new Event('campus:refresh-profile'));}
+  catch(error){document.querySelector('#look-status').textContent=error.message;}
+  finally{button.disabled=false;}
+};

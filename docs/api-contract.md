@@ -1,4 +1,4 @@
-# 통합 연결 규약 v0.7
+# 통합 연결 규약 v0.8
 
 이 문서가 현재 통합 앱의 기준입니다. 사용자 요청에 따라 **스탯 계산은 B**, **계정별 저장·조회는 A**가 담당합니다.
 C는 이 API로 화면·캐릭터를 표현합니다. 원래 개발 계획은 원문으로 보존합니다.
@@ -23,6 +23,7 @@ C는 이 API로 화면·캐릭터를 표현합니다. 원래 개발 계획은 �
 | GET /profile/me | 닉네임·색상·단계·완료 여부 |
 | PUT /profile/me/draft | `{"nickname":"새내기","color":"blue","step":"color"}` 임시 저장 |
 | POST /profile/me/complete | `{"nickname":"새내기","color":"blue"}` 완료 + 캐릭터 원자적 생성 |
+| PUT /profile/me/appearance | 완료 후 학년·학과·외형 변경 (현재 사용자만) |
 | GET /characters/me | 내 캐릭터와 현재 `stats` |
 
 아이디는 한글·영문·숫자·밑줄 2~20자, 앞뒤 공백 제거/NFC 정규화/영문 소문자 변환입니다.
@@ -177,3 +178,19 @@ WebSocket snapshot에는 room_id/tick/people과 서버 좌표 x/y·접속 online
 클라이언트는 이동 좌표를 지정하지 않고 서버가 자동 이동을 계산합니다. 두 브라우저가 같은 tick을 받으면 같은 위치를 표현합니다.
 세션 만료/로그아웃/권한 만료 시 1008로 종료합니다. 정상 연결 장애는 화면에서 자동 재연결합니다.
 현재 방 위치는 단일 서버의 메모리에 보관합니다. 회원·초대·캐릭터·스탯·칭호는 DB에서 복원합니다.
+
+## 학년·학과·픽셀 외형
+
+프로필 응답과 초안/완료 요청에 grade(정수 1~4), major(embedded/computer/ict), appearance를 추가합니다.
+appearance는 base(male/female), hair_length(short/medium/long), hair_color(black/brown/blonde/red/blue/pink/silver)입니다.
+기존 클라이언트가 생략한 값은 초안을 유지하며 신규 계정 기본값은 1학년·computer·female/long/black입니다.
+`PUT /profile/me/appearance`는 완료 계정에서 아래 전체 설정을 저장합니다. 캐릭터 ID·기록·스탯은 유지합니다.
+
+```json
+{"grade":3,"major":"embedded","appearance":{"base":"male","hair_length":"short","hair_color":"blue"}}
+```
+
+캐릭터 응답에는 appearance, `/api/me`·사용자 검색·라운지 멤버에는 grade/major/appearance가 포함됩니다.
+프런트는 팀 픽셀 렌더러의 composeCharacter를 Phaser 텍스처로 합성하고 학과 과잠을 표시합니다.
+원본 계획은 보존하고 추가 제안은 character-design-spec.md에 분리했습니다. 그 문서의 레벨/역할 제안은
+현재 B의 스탯 계산을 대체하지 않습니다. 프로필·외형 선택만 현 실행 화면에 연결했습니다.

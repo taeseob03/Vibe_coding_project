@@ -1,13 +1,13 @@
 # C의 게임 화면 연결 규약
 
 A는 인증·저장·조회, B는 분석·스탯 계산, C는 게임 화면과 캐릭터 표현을 담당합니다.
-현재 `frontend/`는 동작 확인용 임시 화면이며 자산 URL은 `/static/` 접두사를 사용합니다. API 경로와 인증 연결을 유지하며 교체할 수 있습니다.
+현재 `frontend/`는 통합 게임 화면이며 자산 URL은 `/static/` 접두사를 사용합니다. API 경로와 인증 연결을 유지하며 교체할 수 있습니다.
 
 ## 진입 순서
 
 1. `GET /auth/me`. 401이면 아이디 접속 화면을 표시합니다.
 2. `POST /auth/login`에 username을 JSON으로 보내고 세션 쿠키를 받습니다.
-3. `GET /profile/me`. onboarding_completed=false이면 닉네임/색상 설정을 표시합니다.
+3. `GET /profile/me`. onboarding_completed=false이면 닉네임·학년·학과/픽셀 외형 설정을 표시합니다.
 4. 설정 완료 후 `GET /characters/me`, `GET /api/records`로 메인 상태를 불러옵니다.
 
 쿠키를 JavaScript나 localStorage에 복사하지 않습니다. 같은 origin fetch는 `credentials: 'same-origin'`을 사용합니다.
@@ -49,7 +49,7 @@ stats의 각 항목은 B가 제공한 표시 정보입니다. 예시는 한 항�
 
 | 필드 | C의 사용 |
 |---|---|
-| 캐릭터 color | 최초 설정에서 선택한 기본 캐릭터 색상 |
+| 캐릭터 color | 최초 설정에서 선택한 테마 색상 |
 | stats[].category | 활동 이름 |
 | stats[].count | 현재 활동 수치 |
 | stats[].level | B의 현재 표시 단계 |
@@ -72,8 +72,12 @@ B의 화면 흐름은 frontend/game/app.js, 모든 실제 HTTP는 api.mjs, C의 
 
 `/api/me`, `/api/progress`, `/characters/me`, 라운지 멤버/실시간 snapshot에 state가 전달됩니다.
 B의 effects.character_state가 neutral/focused/energetic/heart_eyes/relaxed 및 intensity/우세 활동을 정합니다.
-표정과 소품을 바꾸려면 avatar.mjs의 벡터 렌더러를 수정합니다. 스탯 계산은 progress.calculate_snapshot에서만 변경합니다.
+표정과 소품을 바꾸려면 avatar.mjs의 픽셀 텍스처·소품 렌더러를 수정합니다. 스탯 계산은 progress.calculate_snapshot에서만 변경합니다.
 
 친구 기능은 socialMode=server이며 실제 사용자 검색·초대·수락을 이용합니다.
 라운지 좌표는 WebSocket snapshot에서 받고 별도 로컬 좌표를 진짜 공유 상태로 가장하지 않습니다.
 샘플 분석은 URL mode=demo와 source=demo를 표시하며 실제 사진 분석과 구분합니다.
+
+픽셀 본체는 assets/character/pixel-character.js의 composeCharacter로 합성합니다.
+appearance와 major에 따라 기본 캐릭터·머리·학과 과잠을 적용합니다.
+최초 설정과 외형 변경 화면에서 선택을 미리 보고, PUT /profile/me/appearance로 저장합니다.

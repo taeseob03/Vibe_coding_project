@@ -33,7 +33,7 @@ export function createLounge(canvas) {
     for (const [id, actor] of actors) if (!present.has(id)) { actor.container.destroy(); actors.delete(id); }
     for (const person of people) {
       const stats = person.stats || Object.entries(person.counts || {}).map(([category,count]) => ({category,count,level:count===0?0:count<5?1:count<10?2:3,color:'#ec4899'}));
-      const signature = JSON.stringify([stats,person.color,person.title,person.nickname,person.state]);
+      const signature = JSON.stringify([stats,person.color,person.title,person.nickname,person.state,person.appearance,person.major]);
       let actor = actors.get(person.id);
       if (!actor || actor.signature !== signature) {
         actor?.container.destroy();

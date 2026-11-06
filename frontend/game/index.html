@@ -10,7 +10,7 @@
 </head>
 <body>
 <div class="app-shell">
-<header class="app-header"><strong>✦ 캠퍼스</strong><span id="profile-name">내 캐릭터</span></header>
+<header class="app-header"><strong>✦ 캠퍼스</strong><span id="profile-name">내 캐릭터</span><button id="open-look" class="small-button">외형 설정</button></header>
 <nav class="page-nav" aria-label="앱 화면"><button id="home-tab" aria-current="page">내 캐릭터</button><button id="lounge-tab">라운지 <span id="invite-badge" hidden></span></button></nav>
 <p id="analysis-mode" class="mode-badge"></p>
 <p id="global-status" class="global-status" role="status" aria-live="polite">캐릭터를 불러오고 있어요…</p>
@@ -71,4 +71,12 @@
 <p id="demo-status" role="status" aria-live="polite"></p><div id="demo-invitations"></div>
 </dialog>
 <dialog id="history-dialog" aria-labelledby="history-title"><div class="dialog-heading"><h2 id="history-title">내 기록</h2><button id="close-history" class="icon-button" aria-label="기록 닫기">✕</button></div><div id="history-list"></div></dialog>
+<dialog id="look-dialog" aria-labelledby="look-title"><div class="dialog-heading"><h2 id="look-title">내 픽셀 캐릭터</h2><button id="close-look" class="icon-button" aria-label="외형 설정 닫기">✕</button></div>
+<form id="look-form"><div id="look-preview" class="look-preview"></div>
+<label for="look-grade">학년</label><select id="look-grade"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="4">4학년</option></select>
+<label for="look-major">학과</label><select id="look-major"><option value="computer">컴퓨터공학과</option><option value="embedded">임베디드시스템공학과</option><option value="ict">정보통신공학과</option></select>
+<label for="look-base">기본 캐릭터</label><select id="look-base"><option value="female">기본 여성</option><option value="male">기본 남성</option></select>
+<label for="look-length">머리 길이</label><select id="look-length"><option value="short">짧은 머리</option><option value="medium">중간 머리</option><option value="long">긴 머리</option></select>
+<label for="look-color">머리 색</label><select id="look-color"><option value="black">검정</option><option value="brown">갈색</option><option value="blonde">금발</option><option value="red">빨강</option><option value="blue">파랑</option><option value="pink">분홍</option><option value="silver">은발</option></select>
+<p id="look-status" role="status"></p><button type="submit">저장하기</button></form></dialog>
 </body></html>

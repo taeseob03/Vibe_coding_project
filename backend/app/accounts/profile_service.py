@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.accounts.models import User
 from app.accounts.profile_schemas import ProfileComplete, ProfileDraft, ProfileRead, SetupRead
+from app.characters.appearance import Appearance
 from app.characters.models import Character
 from app.characters.service import read_character
 
@@ -16,7 +17,21 @@ def read_profile(user: User) -> ProfileRead:
         color=user.draft_color,
         step=user.setup_step,
         onboarding_completed=user.onboarding_completed,
+        grade=user.grade,
+        major=user.major,
+        appearance=Appearance.model_validate(user.draft_appearance or {}),
     )
+
+
+def metadata_values(body):
+    values = {}
+    if "grade" in body.model_fields_set:
+        values["grade"] = body.grade
+    if "major" in body.model_fields_set:
+        values["major"] = body.major
+    if "appearance" in body.model_fields_set:
+        values["draft_appearance"] = body.appearance.model_dump()
+    return values
 
 
 def save_draft(db: Session, user_id: str, body: ProfileDraft) -> ProfileRead:
@@ -27,6 +42,7 @@ def save_draft(db: Session, user_id: str, body: ProfileDraft) -> ProfileRead:
             nickname=body.nickname,
             draft_color=body.color,
             setup_step=body.step,
+            **metadata_values(body),
         )
     )
     if result.rowcount != 1:
@@ -49,10 +65,13 @@ def finish_setup(db: Session, user_id: str, body: ProfileComplete) -> SetupRead:
             draft_color=body.color,
             setup_step="color",
             onboarding_completed=True,
+            **metadata_values(body),
         )
     )
     if result.rowcount == 1:
-        db.add(Character(user_id=user_id, color=body.color))
+        profile = db.get(User, user_id)
+        db.refresh(profile)
+        db.add(Character(user_id=user_id, color=body.color, appearance=profile.draft_appearance))
         try:
             db.commit()
         except IntegrityError:

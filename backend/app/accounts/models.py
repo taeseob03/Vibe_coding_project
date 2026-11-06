@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, false
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -21,6 +21,10 @@ class User(Base):
     onboarding_completed: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default=false()
     )
+
+    grade: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    major: Mapped[str] = mapped_column(String(20), default="computer", server_default="computer")
+    draft_appearance: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
 class LoginSession(Base):

@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.analysis.schemas import AnalysisResult, Category
+from app.characters.appearance import Appearance
 from app.characters.effect_models import CharacterEffect, EffectGrant
 from app.characters.models import Character
 from app.characters.schemas import CharacterRead, EffectApplicationRead, EffectId, EffectRead
@@ -41,6 +42,7 @@ def read_character(db: Session, character: Character) -> CharacterRead:
         id=character.id,
         user_id=character.user_id,
         color=character.color,
+        appearance=Appearance.model_validate(character.appearance or {}),
         effects=[EffectRead.model_validate(effect) for effect in effects],
         stats=current_stats(character),
         state=character_state(current_stats(character)),

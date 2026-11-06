@@ -3,10 +3,11 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.characters.appearance import Appearance, ProfileLook
 from app.characters.schemas import CharacterColor, CharacterRead
 
 
-class ProfileDraft(BaseModel):
+class ProfileDraft(ProfileLook):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     nickname: str = Field(default="", max_length=12)
     color: CharacterColor | None = None
@@ -19,7 +20,7 @@ class ProfileDraft(BaseModel):
         return self
 
 
-class ProfileComplete(BaseModel):
+class ProfileComplete(ProfileLook):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     nickname: str = Field(min_length=2, max_length=12)
     color: CharacterColor
@@ -30,6 +31,9 @@ class ProfileRead(BaseModel):
     nickname: str | None
     color: CharacterColor | None
     step: Literal["nickname", "color"]
+    grade: int = 1
+    major: str = "computer"
+    appearance: Appearance = Field(default_factory=Appearance)
     onboarding_completed: bool
 
 

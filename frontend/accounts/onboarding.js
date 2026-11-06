@@ -15,7 +15,7 @@ export async function mountOnboarding() {
 
   function setBusy(value) {
     busy = value;
-    for (const control of form.querySelectorAll('input, button')) control.disabled = value;
+    for (const control of form.querySelectorAll('input, select, button')) control.disabled = value;
   }
   function selectedColor() {
     return form.querySelector('input[name="color"]:checked')?.value ?? null;
@@ -25,12 +25,17 @@ export async function mountOnboarding() {
     colorStep.hidden = step !== 'color';
     form.dataset.step = step;
   }
+  function profileFields() {
+    return { grade:Number(document.querySelector('#grade').value), major:document.querySelector('#major').value,
+      appearance:{base:document.querySelector('#base').value,hair_length:document.querySelector('#hair-length').value,hair_color:document.querySelector('#hair-color').value} };
+  }
   function updatePreview() {
-    renderCharacter(preview, selectedColor() ?? 'green', nickname.value.trim());
+    const fields=profileFields();
+    renderCharacter(preview, selectedColor() ?? 'green', nickname.value.trim(), fields.appearance, fields.major);
   }
   function saveDraft(step = form.dataset.step) {
     // 저장 요청을 순서대로 처리해 앞선 입력이 나중 입력을 덮어쓰지 않게 합니다.
-    const body = { nickname: nickname.value, color: selectedColor(), step };
+    const body = { nickname: nickname.value, color: selectedColor(), step, ...profileFields() };
     queue = queue.catch(() => {}).then(async () => {
       status.textContent = '임시 저장 중…';
       await api('/profile/me/draft', { method: 'PUT', body: JSON.stringify(body) });
@@ -46,6 +51,8 @@ export async function mountOnboarding() {
       if (profile.onboarding_completed) return profile;
       section.hidden = false;
       nickname.value = profile.nickname ?? '';
+      document.querySelector('#grade').value=profile.grade||1;document.querySelector('#major').value=profile.major||'computer';
+      document.querySelector('#base').value=profile.appearance?.base||'female';document.querySelector('#hair-length').value=profile.appearance?.hair_length||'long';document.querySelector('#hair-color').value=profile.appearance?.hair_color||'black';
       for (const input of form.querySelectorAll('input[name="color"]')) {
         input.checked = input.value === profile.color;
       }
@@ -66,6 +73,7 @@ export async function mountOnboarding() {
     const profile = await load();
     if (profile) window.location.reload();
   });
+  for(const select of form.querySelectorAll('select')) select.addEventListener('change',()=>{updatePreview();if(!busy)saveDraft().catch(error=>{status.textContent=error.message;});});
   nickname.addEventListener('change', () => {
     if (!busy) saveDraft('nickname').catch(error => { status.textContent = `저장 실패: ${error.message}`; });
     updatePreview();
@@ -119,7 +127,7 @@ export async function mountOnboarding() {
       await queue.catch(() => {});
       status.textContent = '캐릭터를 저장하는 중…';
       await api('/profile/me/complete', {
-        method: 'POST', body: JSON.stringify({ nickname: nickname.value, color: selectedColor() }),
+        method: 'POST', body: JSON.stringify({ nickname: nickname.value, color: selectedColor(), ...profileFields() }),
       });
       window.location.reload();
     } catch (error) {

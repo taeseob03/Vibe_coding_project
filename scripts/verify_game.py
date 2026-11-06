@@ -110,6 +110,20 @@ def verify_browser(base, args, scratch):
             item.on("pageerror", lambda error: errors.append(str(error)))
         a = register(page, base, "qa_a_" + token, "초록" + token)
         b = register(friend, base, "qa_b_" + token, "친구" + token)
+        a.locator("#open-look").click()
+        a.locator("#look-grade").select_option("3")
+        a.locator("#look-major").select_option("embedded")
+        a.locator("#look-base").select_option("male")
+        a.locator("#look-length").select_option("short")
+        a.locator("#look-color").select_option("blue")
+        a.locator('#look-form button[type="submit"]').click()
+        expect(a.locator("#look-dialog")).not_to_be_visible()
+        profile = page.request.get(base + "/profile/me").json()
+        assert (
+            profile["grade"] == 3
+            and profile["major"] == "embedded"
+            and profile["appearance"]["hair_color"] == "blue"
+        )
         post(a, "운동")
         assert page.request.get(base + "/api/me").json()["state"]["expression"] == "energetic"
         post(a, "술")

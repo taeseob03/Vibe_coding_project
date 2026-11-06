@@ -1,18 +1,16 @@
+import { composeCharacter } from '/static/assets/character/pixel-character.js';
 import { api } from '/static/shared/api.js';
 
 export const colorNames = { green: '초록', blue: '파랑', yellow: '노랑', pink: '분홍', purple: '보라' };
 
-export function renderCharacter(target, color, nickname = '미리보기') {
-  const figure = document.createElement('div');
-  figure.className = 'character-figure';
-  const avatar = document.createElement('div');
-  avatar.className = `campus-avatar color-${Object.hasOwn(colorNames, color) ? color : 'green'}`;
-  avatar.setAttribute('role', 'img');
-  avatar.setAttribute('aria-label', `${colorNames[color] ?? '초록'}색 임시 캐릭터`);
-  const name = document.createElement('p');
-  name.textContent = nickname || '미리보기';
-  figure.append(avatar, name);
-  target.replaceChildren(figure);
+export function renderCharacter(target, color, nickname = '미리보기', appearance = {base:'female',hair_length:'long',hair_color:'black'}, major = 'computer') {
+  const figure=document.createElement('div');figure.className='character-figure';
+  const canvas=document.createElement('canvas');canvas.width=144;canvas.height=192;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`${nickname||'내'} 픽셀 캐릭터`);
+  canvas.style.borderBottom='3px solid '+({green:'#91cfa0',blue:'#96c5ed',yellow:'#f1d878',pink:'#eeb0c3',purple:'#c4ade5'}[color]||'#91cfa0');
+  const context=canvas.getContext('2d');context.imageSmoothingEnabled=false;
+  const pixels=composeCharacter(appearance,major);
+  pixels.forEach((pixel,index)=>{if(pixel){context.fillStyle=pixel;context.fillRect(index%48*3,Math.floor(index/48)*3,3,3);}});
+  const name=document.createElement('p');name.textContent=nickname||'미리보기';figure.append(canvas,name);target.replaceChildren(figure);
 }
 
 export async function mountCharacter(nickname) {

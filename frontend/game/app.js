@@ -58,7 +58,7 @@ function renderMe() {
     const card = document.createElement('div'); card.className = 'activity-card';
     const category = document.createElement('span'); category.textContent = assets.icons[item.category] + ' ' + item.category;
     const count = document.createElement('strong'); count.textContent = item.count + (item.category === '운동' ? '스택' : '회');
-    const level = document.createElement('span'); level.textContent = 'Lv.' + item.level;
+    const level = document.createElement('span'); level.textContent = '단계 ' + item.level;
     card.append(category,count,level);return card;
   }));
   const total = progress.reduce((sum,item)=>sum+item.count,0);

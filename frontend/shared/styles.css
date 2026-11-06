@@ -33,3 +33,5 @@ input { display: block; width: 100%; margin: 12px 0; padding: 12px; font: inheri
 @font-face{font-family:"Campus Sans";src:url("/static/vendor/NotoSansKR.ttf") format("truetype");font-weight:100 900;font-display:swap}body,button,input,textarea,select{font-family:"Campus Sans",system-ui,sans-serif}
 
 #game-frame{height:calc(100dvh - 145px);min-height:0!important}.connected>p:last-child:has(a[href="/docs"]){display:none}
+
+#setup-form select{width:100%;padding:10px;border:1px solid #c5d0bf;border-radius:8px;font:inherit}#setup-form label{margin-top:12px}

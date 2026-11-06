@@ -17,3 +17,5 @@ class Character(Base):
 
     stat_revision: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     title_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+    appearance: Mapped[dict | None] = mapped_column(JSON, nullable=True)

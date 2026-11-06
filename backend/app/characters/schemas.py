@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.characters.appearance import Appearance
 from app.integrations.schemas import StatRead
 
 
@@ -44,6 +45,7 @@ class CharacterRead(BaseModel):
     color: CharacterColor
     effects: list[EffectRead] = Field(default_factory=list)
 
+    appearance: Appearance = Field(default_factory=Appearance)
     stats: list[StatRead] = Field(default_factory=list)
     state: dict = Field(
         default_factory=lambda: {"expression": "neutral", "intensity": 0, "dominant_activity": None}

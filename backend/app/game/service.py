@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.accounts.models import User
+from app.characters.appearance import Appearance
 from app.characters.models import Character
 from app.game.models import Invitation, Lounge, Member, Title
 from app.integrations.models import ActivityRecord
@@ -72,6 +73,9 @@ def user_view(db: Session, user_id: str):
         "id": user.id,
         "username": user.username,
         "nickname": user.nickname,
+        "grade": user.grade,
+        "major": user.major,
+        "appearance": Appearance.model_validate(character.appearance or {}).model_dump(),
         "emoji": "🧑",
         "state": character_state(stats),
         "color": character.color,
