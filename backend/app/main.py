@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.accounts.router import router as accounts_router
+from app.character_preview.router import router as character_preview_router
 from app.characters.router import router as characters_router
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
@@ -22,6 +23,7 @@ def create_app() -> FastAPI:
     app.include_router(accounts_router)
     app.include_router(characters_router)
     app.include_router(records_router)
+    app.include_router(character_preview_router)
     frontend = Path(__file__).resolve().parents[2] / "frontend"
     app.mount("/", StaticFiles(directory=frontend, html=True), name="frontend")
     return app

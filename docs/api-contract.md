@@ -26,6 +26,20 @@
 | GET /records?limit=50 | B | 내 기록 최신순, limit 1~100 |
 | GET /records/{id} | B | 내 기록 상세 |
 | POST /records/{id}/retry | B | 소유권 확인 후 501 |
+| POST /character-preview/analyze | B | 개발 환경 전용. multipart `text`·`image`를 Gemini로 분류만 하고 저장하지 않음 |
+
+### 게시물 분류 (미리보기)
+
+`POST /character-preview/analyze` (multipart/form-data): `text` 0~5,000자, `image` JPG·PNG·WEBP 10MB 이하, 둘 중 하나 필수.
+
+```json
+{"category":"study","category_label":"공부","keywords":["도서관","시험"],
+ "summary":"도서관에서 시험 공부를 했어요.","reason":"공부 관련 키워드","needs_review":false}
+```
+
+`category`는 `drink`·`study`·`exercise`·`love` 또는 `null`(분류 근거 없음).
+오류: 400 `EMPTY_POST`·`TEXT_TOO_LONG`·`IMAGE_*`, 503 `GEMINI_NOT_CONFIGURED`, 502 `ANALYSIS_FAILED`.
+서버 `.env`에 `GEMINI_API_KEY`가 있어야 하며 키는 브라우저에 보내지 않습니다.
 
 가입/로그인/최초 설정 경로는 A가 PR로 요청/응답을 문서화하고 추가합니다.
 기록 삭제·분류 수정 API는 초기 단계에서 추가하지 않습니다.

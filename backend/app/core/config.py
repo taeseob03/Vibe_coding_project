@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     dev_auth_enabled: bool = False
     dev_user_id: UUID = UUID("00000000-0000-4000-8000-000000000001")
     database_url: str = "sqlite:///./backend/data/campus.db"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.5-flash-lite"
 
     @model_validator(mode="after")
     def validate_dev_auth(self):
