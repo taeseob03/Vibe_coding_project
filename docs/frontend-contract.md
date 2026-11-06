@@ -64,3 +64,12 @@ C는 B의 count/level/color를 이용해 자산을 연결합니다. 게임 규�
 분석 후 stat_status=applied이면 캐릭터를 다시 조회합니다.
 skipped는 판단 보류이며 오류나 스탯 획득으로 표시하지 않습니다.
 사용자가 입력한 글·닉네임·키워드는 textContent 등으로 표시해 HTML로 실행하지 않습니다.
+
+## main의 Phaser 초안 병합
+
+main의 `774b44d` 커밋이 공통 frontend/shared/main.js를 Phaser 초안으로 바꿨습니다.
+A 통합 진입점과 충돌하여 C의 소스를 frontend/characters/phaser-draft.js에 원문 그대로 보존했습니다.
+공통 진입점은 접속/최초 설정/통합 기록 API 흐름을 유지합니다.
+초안의 `import Phaser from 'phaser'`에는 별도 Phaser 의존성/빌드 환경이 필요합니다.
+현재 root 화면은 이 초안을 자동 실행하지 않습니다. C의 게임 화면 연결 단계에서 실행 환경과 mount 위치를 연결합니다.
+이 초안의 고정 책 소품과 이동 연출을 실제 사용자 스탯으로 간주하지 않습니다.

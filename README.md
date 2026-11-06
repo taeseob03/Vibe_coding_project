@@ -2,6 +2,8 @@
 
 A의 계정·캐릭터 저장 기능과 B의 사진/글 Gemini 분석·스탯 계산을 연결한 통합 개발 앱입니다.
 C는 이 API를 사용해 게임 화면과 캐릭터 표현을 제작합니다.
+main에서 가져온 C의 Phaser 초안은 `frontend/characters/phaser-draft.js`에 원문 그대로 보존했습니다.
+현재 공통 진입점은 접속/최초 설정/기록 연결을 유지하며, Phaser 설치·실행 및 실제 게임 화면 연결은 C와의 후속 단계입니다.
 사용자가 제공한 원문은 [campus-app-development-plan.md](campus-app-development-plan.md)에 보존했으며,
 현재 역할과 규약은 아래 문서를 기준으로 합니다.
 
