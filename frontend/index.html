@@ -9,13 +9,13 @@
 <body>
   <main>
     <h1>캠퍼스 캐릭터</h1>
-    <p>팀 개발 환경 확인 화면 · 고정된 임시 분석을 사용합니다.</p>
+    <p>아이디로 접속하고 캐릭터를 만들면 게시·라운지 화면으로 이동합니다.</p>
     <section aria-labelledby="account-heading">
       <h2 id="account-heading">아이디로 시작하기</h2>
       <p>처음 입력한 아이디는 새 계정이 되고, 다시 입력하면 이어서 사용할 수 있어요.</p>
       <p>비밀번호 없는 접속입니다. 아이디를 아는 사람은 같은 계정을 사용할 수 있어요.</p>
       <p id="account" role="status" aria-live="polite">접속 상태 확인 중…</p>
-      <form id="login-form" hidden>
+      <form id="login-form">
         <label for="username">아이디</label>
         <input id="username" name="username" required minlength="2" maxlength="20"
           autocomplete="username" autocapitalize="none" spellcheck="false"
@@ -72,6 +72,7 @@
     </section>
     <p><a href="/docs">API 문서</a></p>
   </main>
-  <script type="module" src="/shared/main.js"></script>
+  <noscript>이 앱을 사용하려면 브라우저에서 JavaScript를 켜 주세요.</noscript>
+  <script type="module" src="/shared/main.js?v=local-web-1"></script>
 </body>
 </html>

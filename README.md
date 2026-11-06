@@ -43,6 +43,34 @@ macOS/Linux에서 make 없이 실행할 때는 위의 `python`을 `python3`로, 
 
 ## 역할별 구조
 
+### 로그인부터 새 웹 앱까지 한 주소에서 로컬 테스트
+
+현재 작업 브랜치에는 개발 전용 연결 모드가 있습니다.
+로그인 → 닉네임/색상 선택 → 새 메인 캐릭터 → 게시·AI 분석 → 라운지를 같은 서버에서 시험합니다.
+
+Windows PowerShell에서 저장소 루트 기준:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.lock
+# .env에 GEMINI_API_KEY와 GEMINI_MODEL을 설정한 뒤 실행
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run_local_web.ps1
+```
+
+http://127.0.0.1:8001 을 엽니다. 기존 화면이 남으면 Ctrl+F5로 갱신합니다.
+실행 스크립트는 로컬 프로세스에서만 개발 인증 우회는 끄고 LOCAL_WEB_PREVIEW_ENABLED를 켭니다.
+일반 기본 실행에서 이 옵션은 false이며, 운영 환경에서는 연결 모드가 등록되지 않습니다.
+
+캐릭터 설정 완료 후 `/app`으로 이동합니다. 새 메인에 선택한 닉네임과 색상이 표시됩니다.
+게시의 스택은 로그인한 UUID별 SQLite 파일에 저장되므로 다른 계정과 섞이지 않습니다.
+기존 계정/캐릭터 DB나 이전 공용 시제품 기록을 덮어쓰거나 자동 이관하지 않습니다.
+친구 초대는 브라우저에 계정별로 저장되는 예제이며 수락 테스트 창을 사용합니다.
+라운지의 내 캐릭터는 실제 게시 스택, 예제 친구는 예제 스택을 표시합니다.
+
+이 모드는 A의 인증/프로필을 재사용하는 **로컬 검증용 연결**입니다.
+기록 스택 저장은 개발 전용 `backend/data/web-preview/{사용자 UUID}.sqlite3`에 분리되어 있으며,
+A의 기존 다섯 분류 효과 테이블과의 최종 통합은 별도 단계입니다.
+키는 서버의 `.env`에서만 읽고 브라우저에는 보내지 않습니다.
+
 ```text
 backend/
   app/

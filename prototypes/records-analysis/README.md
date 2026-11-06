@@ -6,6 +6,10 @@
 
 서버 담당에게 전달할 경로·응답 형식·권한·통합 순서는 [앱 서버 연결 안내](docs/app-server-integration.md)에 정리했습니다.
 
+공동 저장소의 `scripts/run_local_web.ps1`을 사용하면 A의 로그인·캐릭터 설정 후 이 화면으로 연결됩니다.
+그 모드에서는 실제 계정 ID·닉네임·색상을 사용하고 스택 DB와 예제 초대 저장도 계정별로 분리합니다.
+아래의 단독 실행 방법은 기존 로그인 없는 시제품 실행입니다. 한 주소 연결 안내는 [공동 개발 안내](../../docs/development.md)를 참고하세요.
+
 ## 실행 (Windows PowerShell)
 
 ```powershell

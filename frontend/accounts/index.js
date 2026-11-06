@@ -1,4 +1,4 @@
-import { api } from '/shared/api.js';
+import { api } from '/shared/api.js?v=local-web-1';
 
 export async function mountAccount() {
   const status = document.querySelector('#account');

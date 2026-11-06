@@ -241,3 +241,13 @@ B가 복구 작업과 화면 재시도 흐름에서 이 함수를 재사용합�
 기록당 효과 레벨 +1 규약과는 아직 연결하지 않았다. 자동 변환으로 임의 연결하지 않으며,
 통합 시 분석 스키마·분류/효과 ID·원자적 증감·사용자 격리 규약과 테스트를 함께 맞춘다.
 상세 화면/API 제안은 [B의 앱 연결 안내](../prototypes/records-analysis/docs/app-server-integration.md)를 참고한다.
+
+### 개발 전용 로컬 연결 모드
+
+현재는 LOCAL_WEB_PREVIEW_ENABLED=true인 개발 서버에서 A의 실제 로그인·프로필을 거쳐
+`/app`의 B 화면으로 이동하는 연결을 추가했다. `GET /api/me`, `GET /api/progress`,
+`POST /api/keywords`는 기존 로그인 쿠키로 인증한다. 사용자 ID는 요청으로 받지 않는다.
+계정별 시제품 스택 DB를 따로 선택하며, A의 다섯 분류 EffectGrant 저장은 변경하지 않는다.
+즉 로그인/설정과 새 웹 화면을 한 주소에서 검증할 수 있지만 최종 저장 구조 통합과는 구분한다.
+개발 모드 판별용 `GET /api/preview-status`와 인증된 브라우저 설정용
+`GET /api/frontend-config.js`에는 API 키가 포함되지 않는다.

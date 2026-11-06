@@ -4,11 +4,12 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>캠퍼스 · 내 캐릭터와 라운지</title>
 <link rel="stylesheet" href="/static/style.css">
+<script src="/api/frontend-config.js"></script>
 <script type="module" src="/static/app.js"></script>
 </head>
 <body>
 <div class="app-shell">
-<header class="app-header"><strong>🌱 캠퍼스</strong><span id="profile-name">내 캐릭터</span></header>
+<header class="app-header"><strong>🌱 캠퍼스</strong><span id="profile-name">내 캐릭터</span><button id="logout-app" class="text-button" hidden>로그아웃</button></header>
 <nav class="page-nav" aria-label="앱 화면"><button id="home-tab" aria-current="page">내 캐릭터</button><button id="lounge-tab">라운지 <span id="invite-badge" hidden></span></button></nav>
 <p id="global-status" class="global-status" role="status" aria-live="polite">캐릭터를 불러오고 있어요…</p>
 <button id="reload" class="text-button" hidden>다시 불러오기</button>

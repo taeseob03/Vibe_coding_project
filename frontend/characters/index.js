@@ -1,4 +1,4 @@
-import { api } from '/shared/api.js';
+import { api } from '/shared/api.js?v=local-web-1';
 
 export const colorNames = { green: '초록', blue: '파랑', yellow: '노랑', pink: '분홍', purple: '보라' };
 

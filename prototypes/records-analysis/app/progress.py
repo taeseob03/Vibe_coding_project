@@ -3,16 +3,30 @@
 import os
 import sqlite3
 from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 
 from .analysis import KeywordResult
 from .effects import EFFECTS
 
+_database_override = ContextVar("preview_progress_database", default=None)
+
+
+@contextmanager
+def use_database(path):
+    """Bind a trusted server-selected database to one request, including worker threads."""
+    token = _database_override.set(path)
+    try:
+        yield
+    finally:
+        _database_override.reset(token)
+
 
 @contextmanager
 def connection():
     path = Path(
-        os.getenv(
+        _database_override.get()
+        or os.getenv(
             "PROGRESS_DB", str(Path(__file__).resolve().parent.parent / "data" / "progress.sqlite3")
         )
     )

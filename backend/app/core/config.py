@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     session_cookie_name: str = "campus_session"
     session_max_age: int = Field(default=604800, ge=60, le=2592000)
     database_url: str = "sqlite:///./backend/data/campus.db"
+    local_web_preview_enabled: bool = False
 
     @model_validator(mode="after")
     def validate_dev_auth(self):

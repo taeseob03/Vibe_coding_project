@@ -1,18 +1,32 @@
-import { mountAccount } from '/accounts/index.js';
-import { mountOnboarding } from '/accounts/onboarding.js';
-import { mountCharacter } from '/characters/index.js';
-import { mountRecords } from '/records/index.js';
-
-// main의 캐릭터 애니메이션 초안은 /characters/phaser-draft.js에 보존했습니다.
-// Phaser 패키지/번들 환경 연결 전에는 로그인 진입점에서 import하지 않습니다.
-
-const user = await mountAccount();
-if (user) {
-  const profile = await mountOnboarding();
-  if (profile) {
-    document.querySelector('#character-section').hidden = false;
-    document.querySelector('#record-section').hidden = false;
-    await mountCharacter(profile.nickname);
-    mountRecords();
+try {
+  const [{ mountAccount }, { mountOnboarding }] = await Promise.all([
+    import('/accounts/index.js?v=local-web-1'),
+    import('/accounts/onboarding.js?v=local-web-1'),
+  ]);
+  const user = await mountAccount();
+  if (user) {
+    const profile = await mountOnboarding();
+    if (profile) {
+      const response = await fetch('/api/preview-status', { cache: 'no-store' });
+      const preview = response.ok ? await response.json() : { enabled: false };
+      if (preview.enabled) {
+        window.location.replace('/app');
+      } else {
+        const [{ mountCharacter }, { mountRecords }] = await Promise.all([
+          import('/characters/index.js?v=local-web-1'), import('/records/index.js?v=local-web-1'),
+        ]);
+        document.querySelector('#character-section').hidden = false;
+        document.querySelector('#record-section').hidden = false;
+        await mountCharacter(profile.nickname);
+        mountRecords();
+      }
+    }
   }
+} catch (error) {
+  document.querySelector('#account').textContent = '화면을 불러오지 못했어요. Ctrl+F5로 새로고침하거나 아래 버튼으로 다시 시도해 주세요.';
+  const retry = document.createElement('button');
+  retry.textContent = '화면 다시 불러오기';
+  retry.onclick = () => window.location.reload();
+  document.querySelector('#account').after(retry);
+  console.error('Account screen initialization failed:', error);
 }

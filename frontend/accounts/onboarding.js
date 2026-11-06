@@ -1,5 +1,5 @@
-import { api } from '/shared/api.js';
-import { renderCharacter } from '/characters/index.js';
+import { api } from '/shared/api.js?v=local-web-1';
+import { renderCharacter } from '/characters/index.js?v=local-web-1';
 
 export async function mountOnboarding() {
   const section = document.querySelector('#setup-section');

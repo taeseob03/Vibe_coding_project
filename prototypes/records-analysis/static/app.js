@@ -52,7 +52,7 @@ $('#screen').addEventListener('touchcancel', () => { startTouch=undefined; });
 
 function renderMe() {
   if (!me) return;
-  renderCharacter($('#main-character'), progress, me.emoji);
+  renderCharacter($('#main-character'), progress, me.emoji, me.color);
   $('#activity-counts').replaceChildren(...progress.map(item => {
     const card = document.createElement('div'); card.className = 'activity-card';
     const category = document.createElement('span'); category.textContent = assets.icons[item.category] + ' ' + item.category;
@@ -194,7 +194,14 @@ async function renderDemoInbox() {
 $('#open-demo').onclick=()=>{$('#demo-dialog').showModal();renderDemoInbox();};
 $('#demo-user').onchange=renderDemoInbox;
 $('#demo-tools').hidden=config.socialMode!=='demo';$('#demo-notice').hidden=config.socialMode!=='demo';
-window.addEventListener('storage',event=>{if(event.key==='campus-social-demo-v1' && me)loadSocial().catch(error=>status('#global-status',error.message,true));});
+window.addEventListener('storage',event=>{if(event.key?.startsWith('campus-social-demo-v1') && me)loadSocial().catch(error=>status('#global-status',error.message,true));});
+$('#logout-app').hidden=config.profileMode!=='server';
+$('#logout-app').onclick=async()=>{
+  if(busy){status('#global-status','게시 처리가 끝난 후 로그아웃해 주세요.');return;}
+  $('#logout-app').disabled=true;
+  try{await api.logout();location.assign(config.loginUrl || '/');}
+  catch(error){status('#global-status',error.message,true);$('#logout-app').disabled=false;}
+};
 
 function clearPreview() {
   if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=undefined;
