@@ -1,13 +1,13 @@
 """Small, bounded live probes. Never prints API keys or request headers."""
+
 import asyncio
 import json
 import os
 import time
 
 import httpx
-from dotenv import load_dotenv
-
 from app.analysis import INSTRUCTIONS, KeywordResult
+from dotenv import load_dotenv
 
 
 async def probe(client, model, structured=False):
@@ -24,15 +24,25 @@ async def probe(client, model, structured=False):
         body["contents"][0]["parts"][0]["text"] = "Reply with OK."
     result = {"model": model, "structured": structured}
     try:
-        response = await client.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", json=body)
+        response = await client.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+            json=body,
+        )
         result["status"] = response.status_code
         data = response.json()
         if response.is_success:
-            result["text"] = "".join(p.get("text", "") for c in data.get("candidates", []) for p in c.get("content", {}).get("parts", []) if not p.get("thought"))
+            result["text"] = "".join(
+                p.get("text", "")
+                for c in data.get("candidates", [])
+                for p in c.get("content", {}).get("parts", [])
+                if not p.get("thought")
+            )
         else:
             error = data.get("error", {})
             result["error_status"] = error.get("status")
-            result["message"] = str(error.get("message", "")).replace(os.environ["GEMINI_API_KEY"], "[redacted]")[:600]
+            result["message"] = str(error.get("message", "")).replace(
+                os.environ["GEMINI_API_KEY"], "[redacted]"
+            )[:600]
     except Exception as exc:
         result["exception"] = type(exc).__name__
     result["seconds"] = round(time.monotonic() - started, 2)

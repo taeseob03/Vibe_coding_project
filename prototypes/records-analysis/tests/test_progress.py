@@ -1,14 +1,13 @@
 from concurrent.futures import ThreadPoolExecutor
-from uuid import uuid4
 from unittest.mock import AsyncMock
+from uuid import uuid4
 
 import pytest
+from app import progress, routes
+from app.analysis import KeywordResult
+from app.main import app
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
-
-from app.analysis import KeywordResult
-from app import routes, progress
-from app.main import app
 
 
 @pytest.fixture(autouse=True)
@@ -17,9 +16,14 @@ def isolated_db(monkeypatch, tmp_path):
 
 
 def result(category="연애", review=False):
-    return KeywordResult(keywords=["반지", "데이트"], summary="데이트 기록", category=category,
-                         category_keywords=["반지", "데이트"] if category else [],
-                         category_reason="키워드 의미", needs_review=review)
+    return KeywordResult(
+        keywords=["반지", "데이트"],
+        summary="데이트 기록",
+        category=category,
+        category_keywords=["반지", "데이트"] if category else [],
+        category_reason="키워드 의미",
+        needs_review=review,
+    )
 
 
 def test_growth_boundaries_and_persistence():
@@ -58,7 +62,14 @@ def test_ambiguous_or_unrelated_not_counted(category):
 
 def test_invented_evidence_rejected():
     with pytest.raises(ValidationError):
-        KeywordResult(keywords=["구름"], summary="하늘", category="연애", category_keywords=["데이트"], category_reason="", needs_review=False)
+        KeywordResult(
+            keywords=["구름"],
+            summary="하늘",
+            category="연애",
+            category_keywords=["데이트"],
+            category_reason="",
+            needs_review=False,
+        )
 
 
 def count(category):

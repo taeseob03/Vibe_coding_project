@@ -1,4 +1,5 @@
 """Call the running local API without a browser."""
+
 import argparse
 import json
 from pathlib import Path
@@ -17,9 +18,15 @@ def main():
         with httpx.Client(timeout=90) as client:
             if args.image:
                 with args.image.open("rb") as image:
-                    response = client.post("http://127.0.0.1:8000/api/keywords", data={"text": args.text}, files={"image": (args.image.name, image)})
+                    response = client.post(
+                        "http://127.0.0.1:8000/api/keywords",
+                        data={"text": args.text},
+                        files={"image": (args.image.name, image)},
+                    )
             else:
-                response = client.post("http://127.0.0.1:8000/api/keywords", data={"text": args.text})
+                response = client.post(
+                    "http://127.0.0.1:8000/api/keywords", data={"text": args.text}
+                )
         print(f"HTTP {response.status_code}")
         print(json.dumps(response.json(), ensure_ascii=False, indent=2))
         return 0 if response.is_success else 1

@@ -15,11 +15,12 @@ test('app flow: swipe, nickname search, pending invitation, acceptance, inbox, p
   const $=selector=>win.document.querySelector(selector);
   const until=async predicate=>{for(let i=0;i<100;i++){if(predicate())return;await new Promise(resolve=>setTimeout(resolve,5));}throw new Error('UI did not reach expected state');};
   const counts=count=>['술','공부','연애','운동'].map(category=>({category,count:category==='공부'?count:0,level:category==='공부'&&count?1:0,color:'#f9a8d4'}));
-  let fail=true;const posts=[];
+  let fail=true, drinking=false;const posts=[];
   globalThis.fetch=async(url,options)=>{
     if(url==='/api/progress')return {ok:true,json:async()=>({progress:counts(0)})};
     assert.equal(url,'/api/keywords');posts.push(options.body);
     if(fail)return {ok:false,json:async()=>({detail:'분석에 실패했습니다.'})};
+    if(drinking)return {ok:true,json:async()=>({keywords:['맥주'],summary:'술 기록',category:'술',category_keywords:['맥주'],needs_review:false,awarded:true,stack_changes:{'술':1,'운동':-1},progress:counts(1)})};
     return {ok:true,json:async()=>({keywords:['도서관','공부'],summary:'도서관에서 공부했다.',category:'공부',category_keywords:['공부'],needs_review:false,awarded:true,progress:counts(1)})};
   };
   await import('../static/app.js');
@@ -61,5 +62,10 @@ test('app flow: swipe, nickname search, pending invitation, acceptance, inbox, p
   assert.equal($('#preview-box').hidden,false);
   $('#post-form').dispatchEvent(new win.Event('submit',{bubbles:true,cancelable:true}));await until(()=>!$('#post-result').hidden);
   assert.equal(posts.at(-1).get('image').name,'photo.png');assert.equal(posts.at(-1).get('text'),'');
+  $('#show-character').click();$('#open-post').click();drinking=true;
+  $('#post-text').value='맥주를 마셨다.';$('#post-form').dispatchEvent(new win.Event('submit',{bubbles:true,cancelable:true}));
+  await until(()=>!$('#post-result').hidden);
+  assert.ok($('#result-effect').textContent.includes('운동 스택은 1 줄었어요'));
+  assert.ok($('#global-status').textContent.includes('운동 −1'));
   dom.window.close();
 });

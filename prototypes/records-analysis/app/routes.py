@@ -1,18 +1,18 @@
+import hashlib
 import io
 import warnings
-import hashlib
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 import httpx
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from google.genai.errors import APIError
 from PIL import Image, UnidentifiedImageError
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
-from .analysis import AnalysisUnavailable, KeywordResult, extract_keywords
-from .effects import AnalysisResult, attach_effect
 from . import progress
+from .analysis import AnalysisUnavailable, extract_keywords
+from .effects import AnalysisResult, attach_effect
 
 router = APIRouter(prefix="/api", tags=["keywords"])
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
@@ -31,12 +31,23 @@ def validate_image(data: bytes) -> str:
                     raise HTTPException(400, "이미지는 2,500만 픽셀 이하로 올려 주세요.")
                 image.verify()
         return mime
-    except (UnidentifiedImageError, OSError, SyntaxError, ValueError, Image.DecompressionBombError, Image.DecompressionBombWarning):
-        raise HTTPException(400, "이미지 파일을 읽을 수 없습니다. 정상적인 JPG, PNG, WEBP를 선택해 주세요.")
+    except (
+        UnidentifiedImageError,
+        OSError,
+        SyntaxError,
+        ValueError,
+        Image.DecompressionBombError,
+        Image.DecompressionBombWarning,
+    ):
+        raise HTTPException(
+            400, "이미지 파일을 읽을 수 없습니다. 정상적인 JPG, PNG, WEBP를 선택해 주세요."
+        )
 
 
 @router.post("/keywords", response_model=AnalysisResult)
-async def keywords(text: str = Form(""), image: UploadFile | None = File(None), record_id: UUID | None = Form(None)):
+async def keywords(
+    text: str = Form(""), image: UploadFile | None = File(None), record_id: UUID | None = Form(None)
+):
     text = text.strip()
     if len(text) > 5000:
         raise HTTPException(400, "글은 5,000자 이하로 입력해 주세요.")
@@ -67,14 +78,24 @@ async def keywords(text: str = Form(""), image: UploadFile | None = File(None), 
         raise HTTPException(503, str(exc))
     except APIError as exc:
         if exc.code == 504:
-            raise HTTPException(504, "Gemini 서버의 분석 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.")
+            raise HTTPException(
+                504, "Gemini 서버의 분석 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요."
+            )
         if exc.code == 429:
-            raise HTTPException(429, "Gemini 요청 한도를 초과했습니다. AI Studio의 할당량을 확인하고 잠시 후 다시 시도해 주세요.")
+            raise HTTPException(
+                429,
+                "Gemini 요청 한도를 초과했습니다. "
+                "AI Studio의 할당량을 확인하고 잠시 후 다시 시도해 주세요.",
+            )
         if exc.code in (400, 401, 403):
             raise HTTPException(503, "Gemini API 키 또는 요청 권한을 확인해 주세요.")
         if exc.code == 404:
-            raise HTTPException(503, "Gemini 모델을 찾을 수 없습니다. GEMINI_MODEL 설정을 확인해 주세요.")
-        raise HTTPException(502, "Gemini 서버가 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.")
+            raise HTTPException(
+                503, "Gemini 모델을 찾을 수 없습니다. GEMINI_MODEL 설정을 확인해 주세요."
+            )
+        raise HTTPException(
+            502, "Gemini 서버가 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+        )
     except (httpx.TimeoutException, TimeoutError):
         raise HTTPException(504, "분석 시간이 초과되었습니다. 다시 시도해 주세요.")
     except httpx.RequestError:
@@ -88,4 +109,3 @@ async def keywords(text: str = Form(""), image: UploadFile | None = File(None), 
 @router.get("/progress")
 async def get_progress():
     return {"progress": await run_in_threadpool(progress.state)}
-

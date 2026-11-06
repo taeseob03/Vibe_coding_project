@@ -1,5 +1,5 @@
-from pathlib import Path
 import mimetypes
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -24,4 +24,3 @@ async def index():
 @app.get("/lounge", include_in_schema=False)
 async def lounge():
     return RedirectResponse("/?view=lounge")
-

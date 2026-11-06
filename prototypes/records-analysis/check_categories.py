@@ -1,8 +1,10 @@
 """Small live classification smoke test against the local app."""
+
 import os
 import tempfile
-from fastapi.testclient import TestClient
+
 from app.main import app
+from fastapi.testclient import TestClient
 
 cases = [
     ("친구들과 술집에서 맥주를 마셨다.", "술"),
@@ -20,7 +22,15 @@ with tempfile.TemporaryDirectory() as directory, TestClient(app) as client:
         response = client.post("/api/keywords", data={"text": text})
         response.raise_for_status()
         data = response.json()
-        print(text, "=>", data["category"], data["category_keywords"], "awarded=", data["awarded"], flush=True)
+        print(
+            text,
+            "=>",
+            data["category"],
+            data["category_keywords"],
+            "awarded=",
+            data["awarded"],
+            flush=True,
+        )
         assert data["category"] == expected
         if text == "오늘 하늘이 파랗다.":
             assert data["needs_review"] is True
