@@ -1,5 +1,5 @@
 import { api } from '/shared/api.js?v=local-web-1';
-import { renderCharacter } from '/characters/index.js?v=local-web-1';
+import { HAIR, createStage } from '/assets/character/pixel-character.js';
 
 export async function mountOnboarding() {
   const section = document.querySelector('#setup-section');
@@ -8,17 +8,42 @@ export async function mountOnboarding() {
   const nickname = document.querySelector('#nickname');
   const nameStep = document.querySelector('#nickname-step');
   const colorStep = document.querySelector('#color-step');
-  const preview = document.querySelector('#setup-preview');
   const retry = document.querySelector('#setup-retry');
   let queue = Promise.resolve();
   let busy = false;
+  let editing = false;
+  const grade = document.querySelector('#setup-grade');
+  const swatches = document.querySelector('#setup-hair-colors');
+  for (const [key, palette] of Object.entries(HAIR)) {
+    const label = document.createElement('label');
+    const radio = document.createElement('input');
+    radio.type = 'radio'; radio.name = 'hair_color'; radio.value = key;
+    radio.checked = key === 'black';
+    const dot = document.createElement('span'); dot.className = 'hair-swatch';
+    dot.style.background = palette.base; dot.setAttribute('aria-hidden', 'true');
+    label.append(radio, dot, document.createTextNode(palette.name)); swatches.append(label);
+  }
+  const selected = name => form.querySelector(`input[name="${name}"]:checked`)?.value;
+  function customization() {
+    return {
+      grade: Number(grade.value), major: selected('major') || null,
+      appearance: { base: selected('base'), hair_length: selected('hair_length'), hair_color: selected('hair_color') },
+    };
+  }
+  const stage = typeof window.CanvasRenderingContext2D === 'function'
+    ? createStage(document.querySelector('#setup-canvas'), () => ({
+      profile: { nickname: nickname.value.trim(), grade: Number(grade.value), major: selected('major') },
+      appearance: customization().appearance, levels: { drink: 0, study: 0, exercise: 0, love: 0 },
+    })) : null;
+  window.addEventListener('pagehide', () => stage?.stop());
+  window.addEventListener('pageshow', () => { if (!form.hidden) stage?.start(); });
 
   function setBusy(value) {
     busy = value;
-    for (const control of form.querySelectorAll('input, button')) control.disabled = value;
+    for (const control of form.querySelectorAll('input, select, button')) control.disabled = value;
   }
   function selectedColor() {
-    return form.querySelector('input[name="color"]:checked')?.value ?? null;
+    return selected('color') ?? 'green';
   }
   function showStep(step) {
     nameStep.hidden = step !== 'nickname';
@@ -26,11 +51,12 @@ export async function mountOnboarding() {
     form.dataset.step = step;
   }
   function updatePreview() {
-    renderCharacter(preview, selectedColor() ?? 'green', nickname.value.trim());
+    stage?.redraw();
   }
   function saveDraft(step = form.dataset.step) {
     // 저장 요청을 순서대로 처리해 앞선 입력이 나중 입력을 덮어쓰지 않게 합니다.
-    const body = { nickname: nickname.value, color: selectedColor(), step };
+    if (editing) return Promise.resolve();
+    const body = { nickname: nickname.value, color: selectedColor(), step, ...customization() };
     queue = queue.catch(() => {}).then(async () => {
       status.textContent = '임시 저장 중…';
       await api('/profile/me/draft', { method: 'PUT', body: JSON.stringify(body) });
@@ -43,16 +69,25 @@ export async function mountOnboarding() {
     status.textContent = '저장된 설정을 불러오는 중…';
     try {
       const profile = await api('/profile/me');
-      if (profile.onboarding_completed) return profile;
+      editing = profile.onboarding_completed;
+      if (editing && new URLSearchParams(location.search).get('customize') !== '1') return profile;
       section.hidden = false;
       nickname.value = profile.nickname ?? '';
+      nickname.readOnly = editing;
+      grade.value = String(profile.grade || 1);
+      const values = { major: profile.major, ...(profile.appearance || {}) };
+      for (const input of form.querySelectorAll('.setup-options input')) {
+        if (values[input.name] != null) input.checked = input.value === values[input.name];
+      }
       for (const input of form.querySelectorAll('input[name="color"]')) {
         input.checked = input.value === profile.color;
       }
-      showStep(profile.step);
+      showStep(profile.major ? profile.step : 'nickname');
       form.hidden = false;
       updatePreview();
-      status.textContent = '닉네임과 색상을 선택해 나만의 캐릭터를 만들어 보세요.';
+      stage?.start();
+      document.querySelector('#setup-complete').textContent = editing ? '저장하고 돌아가기' : '완료하고 시작하기';
+      status.textContent = '학과와 성별, 머리 모양을 선택해 나만의 캐릭터를 만들어 보세요.';
       return null;
     } catch (error) {
       section.hidden = false;
@@ -70,6 +105,13 @@ export async function mountOnboarding() {
     if (!busy) saveDraft('nickname').catch(error => { status.textContent = `저장 실패: ${error.message}`; });
     updatePreview();
   });
+  nickname.addEventListener('input', updatePreview);
+  for (const input of form.querySelectorAll('.setup-options input, #setup-grade')) {
+    input.addEventListener('change', () => {
+      updatePreview();
+      if (!busy) saveDraft().catch(error => { status.textContent = `저장 실패: ${error.message}`; });
+    });
+  }
   for (const input of form.querySelectorAll('input[name="color"]')) {
     input.addEventListener('change', () => {
       updatePreview();
@@ -84,6 +126,7 @@ export async function mountOnboarding() {
       nickname.focus();
       return;
     }
+    if (!selected('major')) { status.textContent = '학과를 선택해 주세요.'; return; }
     setBusy(true);
     try {
       await saveDraft('color');
@@ -108,8 +151,8 @@ export async function mountOnboarding() {
       document.querySelector('#setup-next').click();
       return;
     }
-    if (!selectedColor()) {
-      status.textContent = '캐릭터 색상을 하나 선택해 주세요.';
+    if (!selected('major')) {
+      status.textContent = '학과를 선택해 주세요.';
       return;
     }
     setBusy(true);
@@ -118,10 +161,12 @@ export async function mountOnboarding() {
     try {
       await queue.catch(() => {});
       status.textContent = '캐릭터를 저장하는 중…';
-      await api('/profile/me/complete', {
-        method: 'POST', body: JSON.stringify({ nickname: nickname.value, color: selectedColor() }),
+      await api(editing ? '/profile/me/appearance' : '/profile/me/complete', {
+        method: editing ? 'PUT' : 'POST', body: JSON.stringify(editing ? customization() : {
+          nickname: nickname.value, color: selectedColor(), ...customization(),
+        }),
       });
-      window.location.reload();
+      window.location.replace('/');
     } catch (error) {
       status.textContent = `완료 실패: ${error.message} 입력은 유지됩니다. 다시 시도해 주세요.`;
       button.disabled = false;

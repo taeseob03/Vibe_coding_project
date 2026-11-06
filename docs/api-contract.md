@@ -1,5 +1,13 @@
 # 공통 연결 규약 v0.6
 
+캐릭터 설정 연결: `GET /profile/me`, `/characters/me`, `/api/me`에 `grade`, `major`, `appearance`를 추가합니다.
+`grade`는 1~4 또는 기존 계정의 null, `major`는 embedded/computer/ict 또는 기존 계정의 null입니다.
+`appearance`는 `{base:male|female,hair_length:short|medium|long,hair_color:black|brown|blonde|red|blue|pink|silver}`입니다.
+프로필 draft/complete는 동일 필드를 받으며 계정 DB users.character_setup에 저장합니다(마이그레이션 b0003).
+기존 nickname/color 호출은 유지합니다. 기존 계정은 null 학년/학과와 기본 외형으로 조회됩니다.
+`PUT /profile/me/appearance`는 완료 계정의 위 세 필드만 갱신합니다. 세션 인증이 필요하며 닉네임·캐릭터 ID·스택은 변경하지 않습니다.
+실제 UI는 학과 선택을 요구하며 학과에 따른 과잠·성별·머리 모양을 C 픽셀 렌더러에 반영합니다.
+
 현재 통합 기록 규약은 아래 `통합 기록 API` 절을 기준으로 합니다. 이전 `/records`·effects 규약은 호환용입니다.
 INUstagram의 `/api/keywords`도 같은 activity_records/characters.stats에 반영합니다.
 기존 사용자별 로컬 기록은 기준 스택으로 이어받습니다. 술 +1 시 현재 운동 -1(최소 0), 미래 운동에 차감 부채는 없습니다.

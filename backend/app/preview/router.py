@@ -14,6 +14,7 @@ from starlette.datastructures import Headers
 
 from app.accounts.dependencies import AuthenticatedUser, get_current_user
 from app.accounts.models import User
+from app.characters.appearance import Customization
 from app.characters.models import Character
 from app.core.config import get_settings
 from app.core.db import get_db
@@ -41,6 +42,7 @@ def profile(db: Session, user_id: str):
         "nickname": user.nickname,
         "emoji": "🧑",
         "color": character.color,
+        **Customization.model_validate(user.character_setup or {}).model_dump(),
     }
 
 

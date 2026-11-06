@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, false
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String, false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -15,6 +15,7 @@ class User(Base):
 
     nickname: Mapped[str | None] = mapped_column(String(12), nullable=True)
     draft_color: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    character_setup: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     setup_step: Mapped[str] = mapped_column(
         String(20), default="nickname", server_default="nickname"
     )

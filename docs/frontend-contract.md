@@ -14,11 +14,14 @@ A는 인증·저장·조회, B는 분석·스탯 계산, C는 게임 화면과 �
 
 1. `GET /auth/me`. 401이면 아이디 접속 화면을 표시합니다.
 2. `POST /auth/login`에 username을 JSON으로 보내고 세션 쿠키를 받습니다.
-3. `GET /profile/me`. onboarding_completed=false이면 닉네임/색상 설정을 표시합니다.
+3. `GET /profile/me`. onboarding_completed=false이면 닉네임·학년·학과 → 성별·머리 길이·머리 색 설정을 표시합니다.
 4. 설정 완료 후 `GET /characters/me`, `GET /api/records`로 메인 상태를 불러옵니다.
 
 쿠키를 JavaScript나 localStorage에 복사하지 않습니다. 같은 origin fetch는 `credentials: 'same-origin'`을 사용합니다.
 현재 서버는 프런트엔드를 같은 origin에서 제공하며 다른 Origin 변경 요청은 차단합니다.
+
+실제 최초 설정은 C 렌더러의 도트 미리보기를 사용합니다. `/?customize=1`은 완료 계정의 외형 편집 화면입니다.
+프로필·캐릭터·`/api/me`의 grade/major/appearance를 메인 렌더러에 전달합니다. 기본 여성으로 고정하지 않습니다.
 
 ## 사진/글 입력
 

@@ -61,7 +61,7 @@ $('#screen').addEventListener('touchcancel', () => { startTouch=undefined; });
 
 function renderMe() {
   if (!me) return;
-  renderCharacter($('#main-character'), progress, me.emoji, me.color);
+  renderCharacter($('#main-character'), progress, me.emoji, me.color, me);
   $('#activity-counts').replaceChildren(...progress.map(item => {
     const card = document.createElement('div'); card.className = 'activity-card';
     const category = document.createElement('span'); category.textContent = assets.icons[item.category] + ' ' + item.category;

@@ -31,17 +31,35 @@
       <p id="setup-status" role="status" aria-live="polite"></p>
       <button id="setup-retry" type="button" hidden>설정 다시 불러오기</button>
       <form id="setup-form" data-step="nickname" hidden>
+        <div id="setup-preview" class="setup-stage"><canvas id="setup-canvas" width="560" height="450" aria-label="선택한 캐릭터 미리보기"></canvas></div>
         <div id="nickname-step">
-          <h3>1. 캐릭터의 이름</h3>
+          <h3>1. 프로필</h3>
           <label for="nickname">닉네임</label>
           <input id="nickname" name="nickname" maxlength="12" autocomplete="nickname"
             aria-describedby="nickname-help">
           <p id="nickname-help">앞뒤 공백을 제외하고 2~12자. 접속 아이디와 다른 이름을 쓸 수 있어요.</p>
-          <button id="setup-next" type="button">저장하고 색상 선택하기</button>
+          <label for="setup-grade">학년</label>
+          <select id="setup-grade"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="4">4학년</option></select>
+          <fieldset class="setup-options setup-majors"><legend>학과 · 학과마다 과잠 색이 달라요</legend>
+            <label><input type="radio" name="major" value="embedded"><span>임베디드시스템공학과</span></label>
+            <label><input type="radio" name="major" value="computer"><span>컴퓨터공학과</span></label>
+            <label><input type="radio" name="major" value="ict"><span>정보통신공학과</span></label>
+          </fieldset>
+          <button id="setup-next" type="button">저장하고 캐릭터 선택하기</button>
         </div>
         <div id="color-step" hidden>
-          <h3>2. 캐릭터의 색상</h3>
-          <fieldset class="color-options">
+          <h3>2. 나의 캐릭터 만들기</h3>
+          <fieldset class="setup-options"><legend>성별 · 기본 캐릭터</legend>
+            <label><input type="radio" name="base" value="female" checked><span>여성</span></label>
+            <label><input type="radio" name="base" value="male"><span>남성</span></label>
+          </fieldset>
+          <fieldset class="setup-options"><legend>머리 길이</legend>
+            <label><input type="radio" name="hair_length" value="short"><span>짧은 머리</span></label>
+            <label><input type="radio" name="hair_length" value="medium"><span>중간 머리</span></label>
+            <label><input type="radio" name="hair_length" value="long" checked><span>긴 머리</span></label>
+          </fieldset>
+          <fieldset id="setup-hair-colors" class="setup-options setup-hair"><legend>머리 색상</legend></fieldset>
+          <fieldset class="color-options" hidden>
             <legend>기본 색상을 선택하세요</legend>
             <label><input type="radio" name="color" value="green">초록</label>
             <label><input type="radio" name="color" value="blue">파랑</label>
@@ -49,8 +67,7 @@
             <label><input type="radio" name="color" value="pink">분홍</label>
             <label><input type="radio" name="color" value="purple">보라</label>
           </fieldset>
-          <div id="setup-preview"></div>
-          <button id="setup-back" type="button">닉네임 수정하기</button>
+          <button id="setup-back" type="button">프로필 수정하기</button>
           <button id="setup-complete" type="submit">완료하고 시작하기</button>
         </div>
       </form>
@@ -59,6 +76,7 @@
       <h2 id="character-heading">내 캐릭터</h2>
       <div id="character" aria-live="polite"></div>
       <button id="character-refresh" type="button">캐릭터 다시 불러오기</button>
+      <a href="/?customize=1">캐릭터 설정</a>
     </section>
     <section id="record-section" aria-labelledby="record-heading" hidden>
       <h2 id="record-heading">내 대학생활 기록</h2>

@@ -5,7 +5,9 @@ from sqlalchemy import exists, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.accounts.models import User
 from app.analysis.schemas import AnalysisResult, Category
+from app.characters.appearance import Customization
 from app.characters.effect_models import CharacterEffect, EffectGrant
 from app.characters.models import Character
 from app.characters.schemas import CharacterRead, EffectApplicationRead, EffectId, EffectRead
@@ -42,6 +44,9 @@ def read_character(db: Session, character: Character) -> CharacterRead:
         color=character.color,
         effects=[EffectRead.model_validate(effect) for effect in effects],
         stats=current_stats(character),
+        **Customization.model_validate(
+            db.get(User, character.user_id).character_setup or {}
+        ).model_dump(),
     )
 
 

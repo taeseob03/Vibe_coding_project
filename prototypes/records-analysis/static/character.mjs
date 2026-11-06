@@ -12,7 +12,7 @@ export function countsFromProgress(progress) {
 const stages = new WeakMap();
 const versions = new WeakMap();
 
-export function renderCharacter(container, progress, emoji = assets.body, color) {
+export function renderCharacter(container, progress, emoji = assets.body, color, profile = {}) {
   stages.get(container)?.stop();
   const version = (versions.get(container) || 0) + 1;
   versions.set(container, version);
@@ -40,8 +40,8 @@ export function renderCharacter(container, progress, emoji = assets.body, color)
     canvas.setAttribute('aria-label', '누적 활동 소품이 반영된 도트 캐릭터');
     const keys = { '술': 'drink', '공부': 'study', '운동': 'exercise', '연애': 'love' };
     const state = {
-      profile: { nickname: document.querySelector('#profile-name')?.textContent || '내 캐릭터' },
-      appearance: { base: 'female', hair_length: 'long', hair_color: 'black' },
+      profile: { nickname: profile.nickname || document.querySelector('#profile-name')?.textContent || '내 캐릭터', grade: profile.grade, major: profile.major },
+      appearance: profile.appearance || { base: 'female', hair_length: 'long', hair_color: 'black' },
       // Keep the approved 1/5/10-count display stages while adapting C's five-unit renderer.
       levels: Object.fromEntries(progress.map(item => [keys[item.category], item.level * 5])),
       colors: Object.fromEntries(progress.map(item => [keys[item.category], item.color])),

@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.characters.appearance import Customization
 from app.integrations.schemas import StatRead
 
 
@@ -37,7 +38,7 @@ class EffectApplicationRead(BaseModel):
     effects: list[EffectRead]
 
 
-class CharacterRead(BaseModel):
+class CharacterRead(Customization):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     user_id: UUID

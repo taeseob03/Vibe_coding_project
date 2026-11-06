@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.accounts.models import User
 from app.accounts.profile_schemas import ProfileComplete, ProfileDraft, ProfileRead, SetupRead
+from app.characters.appearance import Customization
 from app.characters.models import Character
 from app.characters.service import read_character
 
@@ -16,6 +17,7 @@ def read_profile(user: User) -> ProfileRead:
         color=user.draft_color,
         step=user.setup_step,
         onboarding_completed=user.onboarding_completed,
+        **Customization.model_validate(user.character_setup or {}).model_dump(),
     )
 
 
@@ -27,6 +29,7 @@ def save_draft(db: Session, user_id: str, body: ProfileDraft) -> ProfileRead:
             nickname=body.nickname,
             draft_color=body.color,
             setup_step=body.step,
+            character_setup=customization_data(body),
         )
     )
     if result.rowcount != 1:
@@ -49,6 +52,7 @@ def finish_setup(db: Session, user_id: str, body: ProfileComplete) -> SetupRead:
             draft_color=body.color,
             setup_step="color",
             onboarding_completed=True,
+            character_setup=customization_data(body),
         )
     )
     if result.rowcount == 1:
@@ -68,3 +72,20 @@ def finish_setup(db: Session, user_id: str, body: ProfileComplete) -> SetupRead:
     if character is None or not user.onboarding_completed:
         raise RuntimeError("Completed setup requires a character")
     return SetupRead(profile=read_profile(user), character=read_character(db, character))
+
+
+def customization_data(body: Customization):
+    return body.model_dump(mode="json", include={"grade", "major", "appearance"})
+
+
+def update_customization(db: Session, user_id: str, body: Customization) -> ProfileRead:
+    result = db.execute(
+        update(User)
+        .where(User.id == user_id, User.onboarding_completed.is_(True))
+        .values(character_setup=customization_data(body))
+    )
+    if result.rowcount != 1:
+        db.rollback()
+        raise HTTPException(409, "최초 설정을 먼저 완료해 주세요.")
+    db.commit()
+    return read_profile(db.get(User, user_id))

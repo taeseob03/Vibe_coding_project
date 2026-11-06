@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/lounge-engine.test.mjs tests/social-model.test.mjs tests/app-ui.test.mjs tests/integrated-api.test.mjs tests/feed-ui.test.mjs tests/pixel-character.test.mjs"
+    "test": "node --test tests/lounge-engine.test.mjs tests/social-model.test.mjs tests/app-ui.test.mjs tests/integrated-api.test.mjs tests/feed-ui.test.mjs tests/pixel-character.test.mjs tests/onboarding-ui.test.mjs"
   },
   "devDependencies": {
     "jsdom": "24.1.3"
