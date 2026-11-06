@@ -237,7 +237,6 @@ $('#post-form').onsubmit=async event=>{
     const result=await api.post(body);progress=result.progress;renderMe();posted=true;
     const tags=result.keywords.map(keyword=>{const tag=document.createElement('span');tag.className='tag';tag.textContent='#'+keyword;return tag;});
     $('#result-keywords').replaceChildren(...tags);
-    $('#result-summary').textContent=result.summary;
     $('#result-category').textContent=result.category ? '분류: '+result.category+' · '+result.category_keywords.join(', ') : '관련 활동 키워드를 찾지 못했어요.';
     const exerciseLoss=result.stack_changes?.['운동'] === -1;
     const awardMessage=result.category+' 활동이 1회 쌓였어요.'+(exerciseLoss?' 운동 스택은 1 줄었어요.':result.category==='술'?' 운동 스택이 0이라 더 줄어들지 않았어요.':'');
