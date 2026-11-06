@@ -1,5 +1,5 @@
 """Server-owned mapping; the model never invents or grants character items."""
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from .analysis import KeywordResult
 
@@ -25,8 +25,9 @@ class AnalysisResult(KeywordResult):
     record_id: str
     awarded: bool
     progress: list[dict]
+    stack_changes: dict[str, int] = Field(default_factory=dict)
 
 
-def attach_effect(result: KeywordResult, record_id: str, awarded: bool, progress: list[dict]) -> AnalysisResult:
+def attach_effect(result: KeywordResult, record_id: str, awarded: bool, progress: list[dict], stack_changes: dict[str, int] | None = None) -> AnalysisResult:
     effect = EFFECTS.get(result.category) if not result.needs_review else None
-    return AnalysisResult(**result.model_dump(), character_effect=effect, record_id=record_id, awarded=awarded, progress=progress)
+    return AnalysisResult(**result.model_dump(), character_effect=effect, record_id=record_id, awarded=awarded, progress=progress, stack_changes=stack_changes or {})

@@ -88,3 +88,4 @@ async def extract_keywords(text: str, image: bytes | None, mime: str | None) -> 
         or not response.text):
         raise AnalysisUnavailable("분석 결과를 완성하지 못했습니다. 내용을 바꿔 다시 시도해 주세요.")
     return KeywordResult.model_validate_json(response.text)
+

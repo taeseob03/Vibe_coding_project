@@ -40,13 +40,32 @@ def save(record_id, fingerprint, result):
     return lookup(record_id, fingerprint), inserted and category is not None
 
 
-def state():
+def snapshot(record_id=None):
+    """Replay committed records in insertion order; drinking never creates exercise debt."""
     with connection() as con:
-        counts = dict(con.execute("SELECT category, COUNT(*) FROM records WHERE category IS NOT NULL GROUP BY category"))
+        records = con.execute(
+            "SELECT id, category FROM records WHERE category IS NOT NULL ORDER BY rowid"
+        ).fetchall()
+    counts = dict.fromkeys(EFFECTS, 0)
+    changes = {}
+    for saved_id, category in records:
+        if category not in counts:
+            continue
+        delta = {category: 1}
+        counts[category] += 1
+        if category == "술" and counts["운동"] > 0:
+            counts["운동"] -= 1
+            delta["운동"] = -1
+        if saved_id == record_id:
+            changes = delta
     effects = []
     for category, effect in EFFECTS.items():
         count = counts.get(category, 0)
         level = 0 if count == 0 else 1 if count < 5 else 2 if count < 10 else 3
         effects.append({**effect.model_dump(), "category": category, "count": count, "level": level,
                         "color": ["#d1d5db", "#f9a8d4", "#ec4899", "#be123c"][level]})
-    return effects
+    return effects, changes
+
+
+def state():
+    return snapshot()[0]

@@ -61,7 +61,8 @@ async def keywords(text: str = Form(""), image: UploadFile | None = File(None), 
             return attach_effect(cached, record_id, False, await run_in_threadpool(progress.state))
         result = await extract_keywords(text, data, mime)
         saved, awarded = await run_in_threadpool(progress.save, record_id, fingerprint, result)
-        return attach_effect(saved, record_id, awarded, await run_in_threadpool(progress.state))
+        current, changes = await run_in_threadpool(progress.snapshot, record_id)
+        return attach_effect(saved, record_id, awarded, current, changes if awarded else {})
     except AnalysisUnavailable as exc:
         raise HTTPException(503, str(exc))
     except APIError as exc:
@@ -87,3 +88,4 @@ async def keywords(text: str = Form(""), image: UploadFile | None = File(None), 
 @router.get("/progress")
 async def get_progress():
     return {"progress": await run_in_threadpool(progress.state)}
+

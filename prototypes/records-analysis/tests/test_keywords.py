@@ -107,6 +107,9 @@ def test_incomplete_result(monkeypatch):
 def test_page_and_static():
     assert client.get("/").status_code == 200
     assert client.get("/static/app.js").status_code == 200
+    assert client.get("/lounge").status_code == 200
+    assert client.get("/static/lounge-view.mjs").status_code == 200
+    assert "javascript" in client.get("/static/lounge-engine.mjs").headers["content-type"]
     assert client.get("/.env").status_code == 404
 
 
@@ -125,3 +128,4 @@ def test_invalid_category_rejected():
     from pydantic import ValidationError
     with pytest.raises(ValidationError):
         analysis.KeywordResult(keywords=[], summary="", category="여행", category_reason="", needs_review=True)
+
