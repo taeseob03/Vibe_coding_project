@@ -23,7 +23,7 @@ dev = ["pytest>=8.4,<10", "httpx>=0.28,<1", "ruff>=0.11,<1"]
 preview = ["google-genai>=2.34,<3", "python-multipart>=0.0.20,<1", "pillow>=11,<13"]
 
 [tool.setuptools]
-packages = ["app", "app.accounts", "app.analysis", "app.characters", "app.core", "app.records", "app.integrations", "app.preview", "campus_records_prototype"]
+packages = ["app", "app.accounts", "app.analysis", "app.characters", "app.core", "app.records", "app.integrations", "app.preview", "app.character_preview", "campus_records_prototype"]
 
 [tool.setuptools.package-dir]
 app = "backend/app"

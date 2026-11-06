@@ -9,6 +9,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.accounts.profile_router import router as profile_router
 from app.accounts.router import router as accounts_router
+from app.character_preview.router import router as character_preview_router
 from app.characters.router import router as characters_router
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(profile_router)
     app.include_router(characters_router)
     app.include_router(records_router, deprecated=True)
+    app.include_router(character_preview_router)
     mimetypes.add_type("application/javascript", ".js")
     mimetypes.add_type("application/javascript", ".mjs")
     frontend = Path(__file__).resolve().parents[2] / "frontend"

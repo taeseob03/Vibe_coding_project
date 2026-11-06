@@ -35,7 +35,7 @@ export function renderCharacter(container, progress, emoji = assets.body, color)
   import('/assets/character/pixel-character.js').then(({ createStage }) => {
     if (versions.get(container) !== version || !container.isConnected) return;
     const canvas = document.createElement('canvas');
-    canvas.width = 560; canvas.height = 390;
+    canvas.width = 560; canvas.height = 450;
     canvas.style.cssText = 'width:100%;height:auto;image-rendering:pixelated';
     canvas.setAttribute('aria-label', '누적 활동 소품이 반영된 도트 캐릭터');
     const keys = { '술': 'drink', '공부': 'study', '운동': 'exercise', '연애': 'love' };
@@ -45,6 +45,7 @@ export function renderCharacter(container, progress, emoji = assets.body, color)
       // Keep the approved 1/5/10-count display stages while adapting C's five-unit renderer.
       levels: Object.fromEntries(progress.map(item => [keys[item.category], item.level * 5])),
       colors: Object.fromEntries(progress.map(item => [keys[item.category], item.color])),
+      titleLevels: Object.fromEntries(progress.map(item => [keys[item.category], item.count])),
     };
     const stage = createStage(canvas, () => state);
     stages.set(container, stage);

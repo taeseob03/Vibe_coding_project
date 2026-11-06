@@ -42,6 +42,8 @@ def test_both_upload_apis_share_counts_drink_rule_and_feed(web_client, monkeypat
     # Replay through the other entrypoint must not call AI or award twice.
     replay = web_client.post("/api/keywords", data={"text": "운동", "record_id": request_id})
     assert replay.status_code == 200 and not replay.json()["awarded"]
+    assert replay.json()["record_id"] == request_id
+    assert replay.json()["character_effect"]["id"] == "exercise_dumbbell"
     assert counts(web_client, "/characters/me") == expected
     monkeypatch.setattr(worker, "extract_keywords", AsyncMock(return_value=result("운동")))
     web_client.post("/api/records", data={"text": "다시 운동"})

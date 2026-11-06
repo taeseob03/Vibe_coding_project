@@ -70,6 +70,24 @@
   .log { list-style: none; padding: 0; margin: 10px 0 0; font-size: 13px; color: var(--muted); max-height: 140px; overflow: auto; }
   .log li { padding: 4px 0; border-bottom: 1px dashed var(--line); }
   .note { font-size: 12px; color: var(--muted); margin-top: 16px; line-height: 1.6; }
+  .photo-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .photo-preview { display: flex; align-items: center; gap: 10px; }
+  .photo-preview[hidden] { display: none; }
+  .photo-preview img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; border: 2px solid var(--line); }
+  .feed-title { font-family: "Jua", sans-serif; font-weight: 400; font-size: 18px; margin: 22px 0 8px; }
+  .feed { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .feed .empty { color: var(--muted); font-size: 14px; }
+  .post { display: grid; grid-template-columns: auto 1fr; gap: 12px; background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 10px; }
+  .post.no-photo { grid-template-columns: 1fr; }
+  .post img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
+  .post .text { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .post .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: 12px; }
+  .badge { border-radius: 999px; padding: 2px 9px; color: #fff; font-weight: 700; }
+  .kw { background: var(--chip); border-radius: 999px; padding: 2px 8px; color: var(--ink); }
+  details.dev { margin-top: 20px; border-top: 2px solid var(--line); padding-top: 12px; }
+  details.dev summary { cursor: pointer; font-size: 14px; font-weight: 700; }
+  .result.error { background: #fde8e4; color: #8a2a1c; }
+  .btn:disabled { opacity: .6; cursor: progress; }
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); opacity: 0;
     background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 12px; font-size: 15px;
     transition: .25s; pointer-events: none; z-index: 10; }
@@ -79,12 +97,12 @@
 <body>
 <header>
   <h1>캠퍼스 캐릭터 미리보기</h1>
-  <p>개발 계획 7장 기준 · 최초 설정(학과별 과잠) → 캐릭터 커스터마이즈 → 기록 분류와 레벨별 소품을 서버 없이 눌러볼 수 있어요.</p>
+  <p>개발 계획 7장 기준 · 최초 설정(학과별 과잠) → 캐릭터 커스터마이즈 → 게시물 분류 → 레벨별 소품·칭호까지 확인할 수 있어요.</p>
 </header>
 
 <main>
   <div class="card stage-card">
-    <canvas id="stage" width="560" height="390" aria-label="캐릭터 미리보기"></canvas>
+    <canvas id="stage" width="560" height="450" aria-label="캐릭터 미리보기"></canvas>
     <div class="stage-info" id="stage-info"></div>
   </div>
 
@@ -92,7 +110,7 @@
     <div class="tabs" role="tablist">
       <button role="tab" data-step="1" aria-selected="true"><span class="n">1</span>프로필</button>
       <button role="tab" data-step="2" aria-selected="false"><span class="n">2</span>캐릭터</button>
-      <button role="tab" data-step="3" aria-selected="false"><span class="n">3</span>기록·레벨</button>
+      <button role="tab" data-step="3" aria-selected="false"><span class="n">3</span>게시물</button>
     </div>
 
     <section class="step active" data-step="1">
@@ -141,28 +159,46 @@
     </section>
 
     <section class="step" data-step="3">
-      <h2>오늘의 대학생활 기록</h2>
-      <p class="sub">글을 올리면 술·공부·운동·연애 중 하나로 분류되고 해당 레벨이 +1 돼요. 5레벨마다 소품이 생기고, 개수와 크기가 커져요.</p>
-      <textarea id="record" rows="3" placeholder="예: 도서관에서 시험 공부를 했다."></textarea>
-      <div class="row" style="margin-top:10px">
-        <button class="btn" id="submit-record" type="button">기록하기</button>
-        <button class="btn ghost" id="sample" type="button">예시 문장</button>
-      </div>
-      <div class="result" id="result" aria-live="polite">분류 결과가 여기에 표시돼요.</div>
+      <h2>게시물 작성</h2>
+      <p class="sub">글과 사진을 올리면 술·공부·운동·연애 중 하나로 분류하고 그 레벨이 +1 돼요. 5레벨마다 소품이 커지고 머리 위에 칭호가 생겨요.</p>
+      <form id="post-form" novalidate>
+        <label class="f" for="post-text">글</label>
+        <textarea id="post-text" rows="4" maxlength="5000" placeholder="오늘 대학생활은 어땠나요?"></textarea>
+        <label class="f">사진 <span style="font-weight:400;color:var(--muted)">· JPG, PNG, WEBP · 10MB 이하</span></label>
+        <div class="photo-row">
+          <label class="btn ghost" for="post-photo" id="photo-pick">사진 첨부</label>
+          <input type="file" id="post-photo" accept="image/jpeg,image/png,image/webp" hidden>
+          <div class="photo-preview" id="photo-preview" hidden>
+            <img id="photo-img" alt="첨부한 사진 미리보기">
+            <button class="btn ghost small" type="button" id="photo-remove">사진 빼기</button>
+          </div>
+        </div>
+        <div class="row" style="margin-top:14px">
+          <button class="btn" type="submit" id="post-submit">게시하기</button>
+          <button class="btn ghost" id="sample" type="button">예시 문장</button>
+        </div>
+      </form>
+      <div class="result" id="result" aria-live="polite">게시하면 분류 결과가 여기에 나와요.</div>
 
-      <table aria-label="카테고리별 레벨">
-        <thead><tr><th>카테고리</th><th>레벨</th><th>소품</th><th>테스트</th></tr></thead>
-        <tbody id="levels"></tbody>
-      </table>
-      <div class="row" style="margin-top:12px; justify-content:flex-end">
-        <button class="btn ghost small" id="reset" type="button">레벨 초기화</button>
-      </div>
-      <ul class="log" id="log"></ul>
+      <h3 class="feed-title">내 게시물</h3>
+      <ul class="feed" id="feed"><li class="empty">아직 게시물이 없어요.</li></ul>
+
+      <details class="dev">
+        <summary>레벨 현황 · 개발용 레벨 조절</summary>
+        <table aria-label="카테고리별 레벨">
+          <thead><tr><th>카테고리</th><th>레벨</th><th>소품 · 칭호</th><th>테스트</th></tr></thead>
+          <tbody id="levels"></tbody>
+        </table>
+        <div class="row" style="margin-top:12px; justify-content:flex-end">
+          <button class="btn ghost small" id="reset" type="button">레벨 초기화</button>
+        </div>
+      </details>
       <p class="note">
+        · 칭호: 5레벨 "xx입문자", 10레벨 "xx의 중수", 15레벨 "xx의 고수", 20레벨 이상 "xx짱". 가장 높은 칭호에 ★가 붙어요.<br>
+        · 소품: 단계 = ⌊레벨 ÷ 5⌋, 개수 최대 3, 크기 1.0배부터 단계마다 +0.15 (최대 1.6배).<br>
         · 옷은 학과 과잠이에요: 임베디드 = 하늘색, 컴퓨터 = 검정(임베디드 디자인), 정보통신 = 회색.<br>
-        · 캐릭터는 계획서 7.2 형식(2~2.5등신 치비 픽셀, 레이어: 뒷머리 → 몸·옷 → 얼굴 → 앞머리 → 소품)으로 코드로 그린 <b>임시 시안</b>이에요. 최종 원본 이미지로 교체하면 돼요.<br>
-        · 여기서 분류는 키워드로 흉내 낸 것이고, 실제 앱에서는 AI가 분류하고 서버가 레벨을 올려요.<br>
-        · 소품 규칙: 단계 = ⌊레벨 ÷ 5⌋, 개수 = 최대 3, 크기 = 1.0배부터 단계마다 +0.15 (최대 1.6배).
+        · 서버 없이 열면 키워드로 임시 분류해요.<br>
+        · 프로필·캐릭터·레벨은 이 브라우저에만 저장돼요. 실제 저장은 기록·캐릭터 기능과 연결할 때 서버로 옮겨요.
       </p>
     </section>
   </div>

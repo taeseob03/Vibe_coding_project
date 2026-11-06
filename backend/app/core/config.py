@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     session_max_age: int = Field(default=604800, ge=60, le=2592000)
     database_url: str = "sqlite:///./backend/data/campus.db"
     local_web_preview_enabled: bool = False
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.5-flash-lite"
 
     @model_validator(mode="after")
     def validate_dev_auth(self):

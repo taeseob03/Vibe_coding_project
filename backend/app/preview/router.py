@@ -19,7 +19,7 @@ from app.core.config import get_settings
 from app.core.db import get_db
 from app.integrations.router import save_input
 from app.integrations.state_store import apply_saved_state, current_stats
-from app.preview.bridge import PROTOTYPE, progress, routes
+from app.preview.bridge import PROTOTYPE, analysis, progress, routes
 from app.preview.posts import claim_analysis, prepare_post
 
 router = APIRouter(tags=["local web preview"])
@@ -132,11 +132,13 @@ async def post_record(
     post = prepare_post(db, user.id, str(record_id), text, data, mime)
     with progress.use_database(user_database(user.id)):
         if post.analysis_status == "completed" and post.analysis_data:
+            parsed = analysis.KeywordResult.model_validate(
+                {key: post.analysis_data[key] for key in analysis.KeywordResult.model_fields}
+            )
             return {
-                **post.analysis_data,
-                "progress": current_stats(character),
-                "awarded": False,
-                "stack_changes": {},
+                **routes.attach_effect(
+                    parsed, str(record_id), False, current_stats(character)
+                ).model_dump(),
                 "post_id": post.id,
             }
         claim_analysis(db, post)
@@ -152,8 +154,6 @@ async def post_record(
             before = {item["category"]: item["count"] for item in current_stats(character)}
             already_applied = activity.stat_status in {"applied", "skipped"}
             if activity.status == "completed" and activity.analysis_data:
-                from app.preview.bridge import analysis
-
                 result_data = analysis.KeywordResult.model_validate(
                     activity.analysis_data
                 ).model_dump()
@@ -161,8 +161,6 @@ async def post_record(
                 result = await routes.keywords(text=text, image=upload, record_id=record_id)
                 result_data = result.model_dump()
                 activity.status = "completed"
-                from app.preview.bridge import analysis
-
                 activity.analysis_data = {
                     key: result_data[key] for key in analysis.KeywordResult.model_fields
                 }
@@ -179,13 +177,18 @@ async def post_record(
                 if not already_applied
                 else {}
             )
+            parsed = analysis.KeywordResult.model_validate(
+                {key: result_data[key] for key in analysis.KeywordResult.model_fields}
+            )
             payload = {
-                **result_data,
+                **routes.attach_effect(
+                    parsed,
+                    str(record_id),
+                    bool(changes),
+                    current_stats(db.get(Character, character.id)),
+                    changes,
+                ).model_dump(),
                 "post_id": post.id,
-                "record_id": str(record_id),
-                "progress": current_stats(db.get(Character, character.id)),
-                "awarded": bool(changes),
-                "stack_changes": changes,
             }
             post.analysis_status = "completed"
             post.analysis_data = payload

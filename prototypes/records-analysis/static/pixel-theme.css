@@ -287,5 +287,6 @@ body > main label { font-weight: 700; }
   button { transition: none; }
 }
 .main-character.has-pixel-character { width: min(100%, 420px); height: auto; }
+.character-stage:has(.has-pixel-character) { height: auto; min-height: 300px; padding: 18px 0; }
 .character-stage:has(.has-pixel-character) .stage-decoration,
 .character-stage:has(.has-pixel-character) .character-ground { display: none; }

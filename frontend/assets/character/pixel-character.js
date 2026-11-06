@@ -23,6 +23,14 @@ export const tierOf = (lv) => Math.floor(lv / 5);
 export const countOf = (tier) => Math.min(tier, 3);
 export const scaleOf = (tier) => tier <= 0 ? 0 : Math.min(1 + 0.15 * (tier - 1), 1.6);
 
+// 칭호 규칙: 5레벨 "xx입문자", 10레벨 "xx의 중수", 15레벨 "xx의 고수", 20레벨 이상 "xx짱"
+export function titleOf(name, level) {
+  const tier = tierOf(level);
+  if (tier <= 0) return null;
+  return [`${name}입문자`, `${name}의 중수`, `${name}의 고수`][tier - 1] ?? `${name}짱`;
+}
+const TITLE_COLORS = { drink: '#2e7c48', study: '#2a4c9c', exercise: '#3a3a44', love: '#c22f52' };
+
 // ───────────────────────── 픽셀 캐릭터 ─────────────────────────
 const W = 48, H = 64;
 const SKIN = { b: '#ffe2c8', s: '#f3c19f', o: '#5c3626' };
@@ -226,7 +234,7 @@ function drawSprite(ctx, key, x, y, p, override) {
 }
 
 /**
- * 캔버스(560×390)에 캐릭터 무대를 그립니다.
+ * 캔버스(560×450)에 캐릭터 무대를 그립니다.
  * getState()는 { profile: {nickname, grade, major}, appearance: {base, hair_length, hair_color}, levels: {drink, study, exercise, love} }를 반환해야 합니다.
  */
 export function createStage(canvas, getState) {
@@ -237,16 +245,45 @@ export function createStage(canvas, getState) {
   let charPixels = composeCharacter(state.appearance, state.profile.major);
 
 // ───────────────────────── 무대 렌더링 ─────────────────────────
-const GROUND = 340, CX = 280;
+const GROUND = 340, CX = 280, TOP = 60; // TOP: 머리 위 칭호 자리
 
 function drawBackground() {
-  const g = ctx.createLinearGradient(0, 0, 0, GROUND);
+  const floor = GROUND + TOP;
+  const g = ctx.createLinearGradient(0, 0, 0, floor);
   g.addColorStop(0, '#ffe9cc'); g.addColorStop(1, '#fcd9b6');
   ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#e8c79c'; ctx.fillRect(0, GROUND, canvas.width, canvas.height - GROUND);
+  ctx.fillStyle = '#e8c79c'; ctx.fillRect(0, floor, canvas.width, canvas.height - floor);
   ctx.fillStyle = '#d9b382';
-  for (let x = 0; x < canvas.width; x += 20) ctx.fillRect(x + ((x / 20) % 2) * 10, GROUND + 15, 10, 5);
-  ctx.fillStyle = '#cfa877'; ctx.fillRect(0, GROUND, canvas.width, 5);
+  for (let x = 0; x < canvas.width; x += 20) ctx.fillRect(x + ((x / 20) % 2) * 10, floor + 15, 10, 5);
+  ctx.fillStyle = '#cfa877'; ctx.fillRect(0, floor, canvas.width, 5);
+}
+
+function drawTitles(t) {
+  const earned = CATS.map((c, i) => ({ ...c, i, level: (state.titleLevels || state.levels)[c.key] }))
+    .filter((c) => tierOf(c.level) > 0)
+    .sort((a, b) => b.level - a.level || a.i - b.i);
+  if (!earned.length) return;
+  ctx.font = 'bold 14px -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+  const pills = earned.map((c, idx) => {
+    const text = (idx === 0 ? '★ ' : '') + titleOf(c.name, c.level);
+    return { ...c, text, w: ctx.measureText(text).width + 22 };
+  });
+  const gap = 8, total = pills.reduce((s, p) => s + p.w, 0) + gap * (pills.length - 1);
+  let x = CX - total / 2;
+  for (const [idx, p] of pills.entries()) {
+    const since = pops[p.key] != null ? t - pops[p.key] : Infinity;
+    const lift = since < 500 ? Math.round(6 * Math.sin((since / 500) * Math.PI)) : 0;
+    const y = 18 - lift, h = 28;
+    ctx.fillStyle = idx === 0 ? '#f2c94c' : 'rgba(255,255,255,.9)'; // 테두리 (대표 칭호는 금색)
+    ctx.fillRect(x - 3, y - 3, p.w + 6, h + 6);
+    ctx.fillStyle = TITLE_COLORS[p.key];
+    ctx.fillRect(x, y, p.w, h);
+    ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x, y, p.w, 4); // 픽셀 하이라이트
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(p.text, x + p.w / 2, y + h / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
+    x += p.w + gap;
+  }
 }
 
 function drawCharacter(oy) {
@@ -308,9 +345,12 @@ function drawItems(t) {
 function frame(t) {
   drawBackground();
   const oy = 8 - (Math.floor(t / 520) % 2); // 숨쉬기 2프레임
+  ctx.save(); ctx.translate(0, TOP);
   drawItems(t);
   drawCharacter(oy);
   drawNameplate();
+  ctx.restore();
+  drawTitles(t);
   animationId = requestAnimationFrame(loop);
 }
 

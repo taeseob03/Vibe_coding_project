@@ -15,19 +15,24 @@ test('merged pixel stage renders account nickname without missing profile fields
     const context = {
       createLinearGradient: () => ({ addColorStop() {} }),
       fillRect() {}, measureText: text => ({ width: text.length * 8 }),
+      save() {}, restore() {}, translate() {}, strokeRect() {},
       fillText: text => labels.push(text),
     };
     const appearance = { base: 'female', hair_length: 'long', hair_color: 'black' };
     assert.equal(composeCharacter(appearance).length, 48 * 64);
-    const stage = createStage({ width: 560, height: 390, getContext: () => context }, () => ({
+    const stage = createStage({ width: 560, height: 450, getContext: () => context }, () => ({
       appearance, profile: { nickname: 'student' },
       levels: { drink: 5, study: 10, exercise: 0, love: 15 }, colors: { love: '#be123c' },
+      titleLevels: { drink: 1, study: 5, exercise: 0, love: 20 },
     }));
     stage.start(); stage.start();
     assert.equal(callbacks.size, 1);
     const [id, frame] = callbacks.entries().next().value;
     callbacks.delete(id); frame(1000);
     assert.ok(labels.includes('student'));
+    assert.ok(labels.includes('공부입문자'));
+    assert.ok(labels.some(label => label.endsWith('연애짱')));
+    assert.ok(!labels.includes('술입문자'));
     assert.ok(labels.every(label => !label.includes('undefined')));
     stage.redraw(); stage.stop();
     assert.equal(callbacks.size, 0);
