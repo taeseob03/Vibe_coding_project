@@ -52,6 +52,8 @@ def public_record(record: ActivityRecord) -> ActivityRead:
         user_id=record.user_id,
         request_id=record.request_id,
         text=record.text,
+        source=record.source,
+        stack_changes=record.stack_changes,
         has_image=record.image_mime is not None,
         status=record.status,
         analysis=record.analysis_data,
@@ -228,3 +230,68 @@ def retry(
     raise HTTPException(
         409, detail={"code": "RETRY_NOT_ALLOWED", "message": "재시도가 필요한 기록이 아닙니다."}
     )
+
+
+@router.post("/demo", response_model=ActivityRead, status_code=201)
+async def demo_record(
+    user: AuthenticatedUser,
+    db: Database,
+    background_tasks: BackgroundTasks,
+    response: Response,
+    category: Annotated[str, Form()],
+    text: Annotated[str, Form()] = "",
+    image: Annotated[UploadFile | None, File()] = None,
+    request_id: Annotated[UUID | None, Form()] = None,
+):
+    from campus_records_prototype.analysis import KeywordResult
+    from campus_records_prototype.effects import EFFECTS
+
+    from app.core.config import get_settings
+
+    if get_settings().app_env != "development":
+        raise HTTPException(404, detail={"code": "NOT_FOUND", "message": "사용할 수 없습니다."})
+    if category not in EFFECTS:
+        raise HTTPException(
+            422, detail={"code": "INVALID_CATEGORY", "message": "샘플 활동을 선택해 주세요."}
+        )
+    data, mime = None, None
+    if image:
+        try:
+            data = await image.read(MAX_IMAGE_BYTES + 1)
+        finally:
+            await image.close()
+        if len(data) > MAX_IMAGE_BYTES:
+            raise HTTPException(
+                413,
+                detail={"code": "IMAGE_TOO_LARGE", "message": "사진은 10MB 이하로 선택해 주세요."},
+            )
+        mime = await run_in_threadpool(validate_image, data)
+    if len(text) > 5000:
+        raise HTTPException(
+            400, detail={"code": "TEXT_TOO_LONG", "message": "글은 5,000자 이하로 입력해 주세요."}
+        )
+    record, created = await run_in_threadpool(
+        save_input,
+        db,
+        user.id,
+        str(request_id or uuid4()),
+        f"[샘플 · {category}] {text.strip()}",
+        data,
+        mime,
+    )
+    if created:
+        record.source = "demo"
+        record.analysis_data = KeywordResult(
+            keywords=[category, "샘플"],
+            summary="직접 선택한 샘플입니다. AI 분석 결과가 아닙니다.",
+            category=category,
+            category_keywords=[category],
+            category_reason="사용자 선택 체험",
+            needs_review=False,
+        ).model_dump(mode="json")
+        db.commit()
+        db.refresh(record)
+        background_tasks.add_task(process_record, record.id)
+    else:
+        response.status_code = 200
+    return public_record(record)

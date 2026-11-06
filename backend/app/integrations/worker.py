@@ -26,7 +26,15 @@ def claim_record(record_id: str):
         if claimed.rowcount != 1:
             return None
         record = db.get(ActivityRecord, record_id)
-        return record.user_id, record.text, record.image_data, record.image_mime, record.attempt
+        return (
+            record.user_id,
+            record.text,
+            record.image_data,
+            record.image_mime,
+            record.source,
+            record.analysis_data,
+            record.attempt,
+        )
 
 
 def save_result(record_id: str, attempt: int, result: KeywordResult):
@@ -89,9 +97,11 @@ async def process_record(record_id: str):
     claimed = await run_in_threadpool(claim_record, record_id)
     if claimed is None:
         return
-    user_id, text, image, mime, attempt = claimed
+    user_id, text, image, mime, source, cached_analysis, attempt = claimed
     try:
-        result = KeywordResult.model_validate(await extract_keywords(text, image, mime))
+        result = KeywordResult.model_validate(
+            cached_analysis if source == "demo" else await extract_keywords(text, image, mime)
+        )
     except asyncio.CancelledError:
         await run_in_threadpool(
             fail_analysis,
@@ -124,3 +134,24 @@ def recover_interrupted():
                 },
             )
         )
+
+
+def rebuild_saved_stats():
+    from campus_records_prototype.progress import calculate_snapshot
+    from sqlalchemy import select
+
+    from app.characters.models import Character
+    from app.game.service import award_titles
+
+    with Session(get_engine()) as db, db.begin():
+        for character in db.scalars(select(Character)).all():
+            events = db.execute(
+                select(ActivityRecord.id, ActivityRecord.category)
+                .where(
+                    ActivityRecord.user_id == character.user_id,
+                    ActivityRecord.stat_status == "applied",
+                )
+                .order_by(ActivityRecord.applied_order)
+            ).all()
+            character.stats = calculate_snapshot(events)[0]
+            award_titles(db, character.user_id)

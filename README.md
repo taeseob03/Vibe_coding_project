@@ -1,19 +1,18 @@
 # 캠퍼스 캐릭터 앱
 
-A의 계정·캐릭터 저장 기능과 B의 사진/글 Gemini 분석·스탯 계산을 연결한 통합 개발 앱입니다.
-C는 이 API를 사용해 게임 화면과 캐릭터 표현을 제작합니다.
-main에서 가져온 C의 Phaser 초안은 `frontend/characters/phaser-draft.js`에 원문 그대로 보존했습니다.
-현재 공통 진입점은 접속/최초 설정/기록 연결을 유지하며, Phaser 설치·실행 및 실제 게임 화면 연결은 C와의 후속 단계입니다.
+A의 계정·저장, B의 Gemini 사진/글 분석·스탯 규칙, C의 Phaser 캐릭터 초안을 하나의 실행 앱으로 통합했습니다.
+아이디 접속 → 캐릭터 생성 → 게시 → 스탯·표정·소품 변화 → 칭호 → 친구와 공유 라운지까지 사용할 수 있습니다.
+C의 원본 초안은 `frontend/characters/phaser-draft.js`에 보존하고 실행 화면은 `frontend/game/`에 연결했습니다.
 사용자가 제공한 원문은 [campus-app-development-plan.md](campus-app-development-plan.md)에 보존했으며,
 현재 역할과 규약은 아래 문서를 기준으로 합니다.
 
 ## 실행
 
-Python 3.12 이상과 Git이 필요합니다. 임시 확인 화면은 HTML/CSS/JavaScript이며 Node.js가 필요하지 않습니다.
-현재 통합 구현은 `feature/account-character` 브랜치에 있습니다.
+Python 3.12 이상과 Git이 필요합니다. 게임 화면은 로컬 Phaser 라이브러리를 사용하며 실행에 Node.js 빌드가 필요하지 않습니다.
+검증한 통합 구현은 main에 반영합니다. 개별 작업은 기능 브랜치에서 진행합니다.
 
 ```bash
-git clone --branch feature/account-character https://github.com/taeseob03/Vibe_coding_project.git
+git clone --branch main https://github.com/taeseob03/Vibe_coding_project.git
 cd Vibe_coding_project
 make setup
 make migrate
@@ -64,18 +63,24 @@ python -m venv .venv
 5. B가 계산한 스탯 결과를 A가 사용자 캐릭터에 저장하고 화면에 전달합니다.
 6. 분석 실패는 원본으로 재시도하며, 스탯 저장 실패는 저장된 분석으로 재처리합니다.
 
-현재 B 코드의 스탯은 활동별 횟수와 그에 따른 표시 단계·색상입니다.
+현재 B 코드의 스탯은 활동별 횟수와 그에 따른 표시 단계·색상입니다. 술은 운동 스탯을 1 줄이며 0 아래로 내려가지 않습니다. 최초 반영 순서를 저장해 미래 운동을 미리 차감하지 않습니다.
 술·공부·연애·운동의 분류와 계산식은 B의 원본을 유지했습니다.
 A가 이전에 만든 ‘새 기록마다 소품 레벨 +1’은 새 통합 흐름에서 사용하지 않습니다.
-구체적인 표정 전환 코드는 현재 B에 없으므로 A가 임의로 추가하지 않았습니다.
-C는 [화면 연결 규약](docs/frontend-contract.md)의 스탯 필드를 사용할 수 있습니다.
+B의 character_state 함수가 현재 스탯의 표시 상태를 정하고, Phaser가 안경·눈·입·소품으로 표현합니다.
+C의 화면은 [화면 연결 규약](docs/frontend-contract.md)의 스탯·표정 상태 필드를 사용합니다.
+
+- **실제 분석:** `.env`에 Gemini 키를 설정하고 사진/글을 게시합니다.
+- **샘플 체험:** 접속 화면의 체험 계정 또는 상단 샘플 체험 링크를 사용합니다. 화면과 기록에 샘플로 표시하며 AI 분석을 가장하지 않습니다.
+- **칭호:** 첫 활동, 서로 다른 5일 공부, 서로 다른 활동 3종으로 획득하고 대표 칭호를 선택합니다.
+- **친구/라운지:** 다른 계정의 닉네임 검색 → 초대 → 수신자 수락 → 참여. 좌표와 접속 상태는 인증된 WebSocket으로 공유됩니다.
+- **두 계정 확인:** 일반 창과 시크릿 창 등 별도 브라우저 세션으로 각각 접속하세요. 같은 브라우저의 탭은 접속 쿠키를 공유합니다.
 
 접속 아이디는 한글·영문·숫자·밑줄 2~20자, 닉네임은 2~12자입니다.
 아이디만으로 접속하므로 해당 아이디를 아는 사람은 같은 계정을 사용할 수 있습니다.
 세션은 기본 7일간 유지되며 현재 브라우저 로그아웃 시 폐기합니다.
 사진은 JPG/PNG/WEBP 한 장, 최대 10MB·2,500만 픽셀입니다. 글은 최대 5,000자입니다.
 현재 개발용 SQLite DB가 원본 사진도 보관하며 사진 조회에 소유권을 확인합니다.
-사진·글 삭제/수정과 보상 회수, 칭호, 라운지, 최종 디자인은 후속 단계입니다.
+기록 수정·삭제 및 재계산 정책, 고급 자산 교체, 여러 서버 운영은 선택 확장입니다. 현재는 단일 서버에서 동작합니다.
 
 ## 구조와 B 원본 활용
 
@@ -88,7 +93,8 @@ prototypes/records-analysis/app/
   analysis.py              B: Gemini 분석 원본
   effects.py               B: 활동별 표시 정보 원본
   progress.py              B: calculate_progress / eligible_category 공통 계산 함수
-frontend/                  C가 교체할 기능 확인용 화면
+frontend/game/             통합 게임·Phaser·게시·칭호·친구/라운지
+frontend/vendor/           고정 Phaser와 한글 글꼴·라이선스
 ```
 
 B 브랜치를 merge하여 원본과 Git 이력을 보존했습니다.
@@ -111,7 +117,16 @@ cd prototypes/records-analysis
 
 자동 테스트에서는 Gemini 응답을 대체하므로 API 키 없이 실행됩니다.
 실제 모델의 응답 품질과 계정의 모델 접근 여부는 유효한 키를 설정해 별도로 확인합니다.
-브라우저 E2E 자동화는 아직 없습니다. GitHub CI는 통합 앱과 B 원본 테스트·마이그레이션을 확인합니다.
+브라우저 검사:
+
+```bash
+.venv/bin/python -m playwright install chromium
+.venv/bin/python scripts/verify_game.py
+# 실제 Gemini 사진 분석 1회를 포함하려면 --live-ai 추가
+```
+
+검증은 별도 임시 DB에서 실행하여 실제 사용자 기록을 변경하지 않습니다.
+CI는 통합 앱·B Python/JS 원본·브라우저·마이그레이션을 검사합니다.
 
 - [공통 API·저장 규약](docs/api-contract.md)
 - [C의 화면 연결 규약](docs/frontend-contract.md)
@@ -119,5 +134,13 @@ cd prototypes/records-analysis
 - [Git 협업 절차](docs/collaboration.md)
 - [진행 상황](docs/tasks.md)
 
-사용자가 다음 단계를 요청할 때만 다음 기능을 시작합니다.
-단계 완료 후 커밋·pull·필요한 병합/검증·A 브랜치 push를 진행합니다.
+현재 사용자 요청에 따라 통합 작업과 main 반영·서버 실행까지 자율 진행합니다. 이후 수정도 커밋·pull·필요한 병합/검증·push 절차로 관리합니다.
+
+## 서버 운영과 범위
+
+이 실행 구성은 Python 프로세스 1개와 로컬 SQLite DB를 사용하는 개발용 게임입니다.
+중단된 분석은 원본으로 재시도하고, 라운지 WebSocket은 자동 재연결합니다.
+호스팅 환경에서 여러 워커/서버를 사용할 때는 공유 큐·방 상태 저장을 별도로 확장합니다.
+게임/게시 API 키를 브라우저에 전달하지 않습니다. `.env`와 DB 파일은 Git에서 제외합니다.
+
+상세 실행·검증 결과는 [통합 게임 안내](docs/game-release.md)를 참고하세요.

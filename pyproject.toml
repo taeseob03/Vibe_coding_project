@@ -19,10 +19,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.4,<10", "httpx>=0.28,<1", "ruff>=0.11,<1"]
+dev = ["pytest>=8.4,<10", "httpx>=0.28,<1", "ruff>=0.11,<1", "playwright>=1.50,<2"]
 
 [tool.setuptools]
-packages = ["app", "app.accounts", "app.analysis", "app.characters", "app.core", "app.records", "app.integrations", "campus_records_prototype"]
+packages = ["app", "app.accounts", "app.analysis", "app.characters", "app.core", "app.records", "app.integrations", "app.game", "campus_records_prototype"]
 
 [tool.setuptools.package-dir]
 app = "backend/app"

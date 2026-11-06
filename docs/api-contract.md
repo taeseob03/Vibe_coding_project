@@ -1,4 +1,4 @@
-# 통합 연결 규약 v0.6
+# 통합 연결 규약 v0.7
 
 이 문서가 현재 통합 앱의 기준입니다. 사용자 요청에 따라 **스탯 계산은 B**, **계정별 저장·조회는 A**가 담당합니다.
 C는 이 API로 화면·캐릭터를 표현합니다. 원래 개발 계획은 원문으로 보존합니다.
@@ -101,7 +101,8 @@ STATE_SAVE_FAILED. 분석 오류와 상태 저장 오류는 서로 다른 필드
 
 - analysis.extract_keywords: Gemini 호출·KeywordResult 검증
 - progress.eligible_category: 스탯 반영 여부
-- progress.calculate_progress: 활동별 횟수 → 표시 단계/색상/소품 정보
+- progress.calculate_snapshot: 최초 반영 순서의 이벤트 → 현재 스탯/변화량
+- effects.character_state: 현재 스탯 → 표정 코드
 - A의 integrations/state_store: 인증된 사용자에 대한 중복 방지·계산 결과 검증·트랜잭션 저장
 
 B의 현재 분류는 술/공부/연애/운동입니다. A가 새 분류나 변경량을 추가하지 않습니다.
@@ -114,7 +115,7 @@ B가 향후 스탯이나 상태 규칙을 변경하면 B 함수와 공통 응답
 `GET /characters/me`의 `stats`가 최신 상태입니다. 예시의 count/level/color는 B가 계산한 값을 저장한 것입니다.
 `stats_snapshot`은 해당 기록 반영 당시 목록이며 이후 기록이 쌓이면 최신 상태와 다를 수 있습니다.
 C는 최신 캐릭터를 다시 조회하여 화면을 갱신합니다.
-현재 원본에 표정·기분·동작 전환 코드가 없으므로 해당 필드는 새로 추측해 만들지 않았습니다.
+state.expression은 B 함수가 정한 neutral/focused/energetic/heart_eyes/relaxed 중 하나이며 Phaser가 표현합니다. intensity는 B 표시 단계, dominant_activity는 현재 우세 활동입니다.
 구체적인 표시 연결은 [frontend-contract.md](frontend-contract.md)를 참고하세요.
 
 ## 이전 호환 API
@@ -130,3 +131,49 @@ C는 최신 캐릭터를 다시 조회하여 화면을 갱신합니다.
 분석 실행은 [FastAPI BackgroundTasks](https://fastapi.tiangolo.com/tutorial/background-tasks/)로 응답 뒤 진행합니다.
 현재는 단일 프로세스 개발 서버를 대상으로 하며 여러 서버의 작업 소유권/외부 큐는 후속입니다.
 Gemini 호출은 B의 [Google Gen AI SDK](https://googleapis.github.io/python-genai/) 구현을 재사용합니다.
+
+## 완성 게임 API 추가
+
+- `GET /api/runtime`: gemini_available/demo_available. 비밀 값은 반환하지 않습니다.
+- `GET /api/me`: 현재 사용자·닉네임·기본 색상·대표 칭호·stats·state.
+- `GET /api/progress`: `{progress:[...],state:{expression,intensity,dominant_activity}}`.
+- `POST /api/records/demo`: development 전용 multipart category/text/image/request_id.
+  샘플임을 source=demo와 요약에 명시합니다. 실제 Gemini 호출을 하지 않습니다.
+- 통합 기록 응답에 source, stack_changes를 추가했습니다. JSON의 stack_changes는 해당 기록의 최초 반영 이력입니다.
+  중복 게시의 화면 어댑터는 추가 변화량을 비워 표시합니다.
+
+### 순서 있는 스탯
+
+B의 새 규칙은 술 +1일 때 현재 운동이 양수면 운동 -1, 아니면 0 유지입니다.
+A는 캐릭터 잠금 아래 applied_order를 부여해 최초 반영 순서를 보존하고 B 함수로 재생합니다.
+분석 완료 순서가 적용 순서입니다. 동일 기록은 order를 다시 받지 않습니다.
+이전 저장 기록은 마이그레이션에서 created_at/id 순으로 안정적 순서를 부여하고 시작 시 B 규칙으로 다시 계산합니다.
+A의 독자적인 소품 +1 규칙은 계속 호환 경로에만 남습니다.
+
+### 칭호
+
+`GET /api/titles`는 id/name/description/earned/selected 목록입니다.
+`PUT /api/titles/selected {title_id}`는 획득한 칭호만 선택하며 null로 해제할 수 있습니다.
+first_step: 첫 확정 활동. steady_challenger: 서로 다른 한국 날짜 5일의 공부 기록.
+campus_explorer: 서로 다른 활동 3종을 확정 기록. 스탯 차감으로 이미 획득한 칭호를 회수하지 않습니다.
+칭호 판정은 applied인 기록만 사용하며 기록·스탯 저장 트랜잭션에서 중복 없이 지급합니다.
+
+### 실제 친구·라운지
+
+| API | 동작 |
+|---|---|
+| GET /api/lounges | 내 방을 보장하고 참여 중인 방 목록 반환 |
+| GET /api/lounges/{id}/members | 멤버만 조회 가능. id/nickname/emoji/color/counts/stats/state/title |
+| GET /api/users?nickname=... | 본인 제외, 설정 완료 사용자, 최대 20명 |
+| POST /api/lounges/{id}/invitations | `{recipient_id}`. 방 주인만 초대 |
+| GET /api/lounge-invitations | 내가 보낸/받은 초대 |
+| POST /api/lounge-invitations/{id}/response | `{accept:bool}`. 수신자만 수락/거절 |
+| WS /api/lounges/{id}/live | 동일 Origin·유효한 쿠키·방 멤버만 연결 |
+
+자기 초대·이미 참여·대기 중복 초대는 409, 다른 발신자/수신자 접근은 403/404입니다.
+수락과 멤버 추가를 같은 트랜잭션에 저장합니다. 같은 수락/거절 반복은 기존 결과를 반환하고 반대 응답은 409입니다.
+거절 후 방 주인이 다시 초대할 수 있습니다. 예제 친구를 실제 회원으로 자동 생성하지 않습니다.
+WebSocket snapshot에는 room_id/tick/people과 서버 좌표 x/y·접속 online·스탯·표정이 포함됩니다.
+클라이언트는 이동 좌표를 지정하지 않고 서버가 자동 이동을 계산합니다. 두 브라우저가 같은 tick을 받으면 같은 위치를 표현합니다.
+세션 만료/로그아웃/권한 만료 시 1008로 종료합니다. 정상 연결 장애는 화면에서 자동 재연결합니다.
+현재 방 위치는 단일 서버의 메모리에 보관합니다. 회원·초대·캐릭터·스탯·칭호는 DB에서 복원합니다.

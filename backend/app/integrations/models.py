@@ -17,7 +17,10 @@ from app.core.db import Base
 
 class ActivityRecord(Base):
     __tablename__ = "activity_records"
-    __table_args__ = (UniqueConstraint("user_id", "request_id", name="uq_activity_request"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "request_id", name="uq_activity_request"),
+        UniqueConstraint("user_id", "applied_order", name="uq_activity_order"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
@@ -35,3 +38,7 @@ class ActivityRecord(Base):
     category: Mapped[str | None] = mapped_column(String(20), nullable=True)
     stats_snapshot: Mapped[list | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    source: Mapped[str] = mapped_column(String(20), default="gemini", server_default="gemini")
+    applied_order: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    stack_changes: Mapped[dict | None] = mapped_column(JSON, nullable=True)

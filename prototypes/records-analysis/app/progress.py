@@ -1,7 +1,8 @@
 """Single local demo profile. Replace this store with A's authenticated user store."""
-from contextlib import contextmanager
+
 import os
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
 
 from .analysis import KeywordResult
@@ -10,12 +11,20 @@ from .effects import EFFECTS
 
 @contextmanager
 def connection():
-    path = Path(os.getenv("PROGRESS_DB", str(Path(__file__).resolve().parent.parent / "data" / "progress.sqlite3")))
+    path = Path(
+        os.getenv(
+            "PROGRESS_DB", str(Path(__file__).resolve().parent.parent / "data" / "progress.sqlite3")
+        )
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(path, timeout=10)
     try:
         with con:
-            con.execute("CREATE TABLE IF NOT EXISTS records (id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, result TEXT NOT NULL, category TEXT)")
+            con.execute(
+                "CREATE TABLE IF NOT EXISTS records ("
+                "id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, "
+                "result TEXT NOT NULL, category TEXT)"
+            )
             yield con
     finally:
         con.close()
@@ -23,7 +32,9 @@ def connection():
 
 def lookup(record_id, fingerprint):
     with connection() as con:
-        row = con.execute("SELECT fingerprint, result FROM records WHERE id=?", (record_id,)).fetchone()
+        row = con.execute(
+            "SELECT fingerprint, result FROM records WHERE id=?", (record_id,)
+        ).fetchone()
     if row:
         if row[0] != fingerprint:
             raise ValueError("같은 기록 ID로 다른 내용을 제출할 수 없습니다.")
@@ -34,28 +45,61 @@ def lookup(record_id, fingerprint):
 def save(record_id, fingerprint, result):
     category = eligible_category(result)
     with connection() as con:
-        cursor = con.execute("INSERT OR IGNORE INTO records VALUES (?, ?, ?, ?)", (record_id, fingerprint, result.model_dump_json(), category))
+        cursor = con.execute(
+            "INSERT OR IGNORE INTO records VALUES (?, ?, ?, ?)",
+            (record_id, fingerprint, result.model_dump_json(), category),
+        )
         inserted = cursor.rowcount == 1
     # A concurrent request may already have committed this record.
     return lookup(record_id, fingerprint), inserted and category is not None
 
 
-def state():
+def snapshot(record_id=None):
+    """Replay committed records in insertion order; drinking never creates exercise debt."""
     with connection() as con:
-        counts = dict(con.execute("SELECT category, COUNT(*) FROM records WHERE category IS NOT NULL GROUP BY category"))
-    return calculate_progress(counts)
+        records = con.execute(
+            "SELECT id, category FROM records WHERE category IS NOT NULL ORDER BY rowid"
+        ).fetchall()
+    return calculate_snapshot(records, record_id)
 
 
 def eligible_category(result):
     return result.category if not result.needs_review else None
 
 
+def calculate_snapshot(records, record_id=None):
+    """B의 순서 기반 규칙을 저장소와 분리한 공유 함수."""
+    counts = dict.fromkeys(EFFECTS, 0)
+    changes = {}
+    for saved_id, category in records:
+        if category not in counts:
+            continue
+        delta = {category: 1}
+        counts[category] += 1
+        if category == "술" and counts["운동"] > 0:
+            counts["운동"] -= 1
+            delta["운동"] = -1
+        if saved_id == record_id:
+            changes = delta
+    return calculate_progress(counts), changes
+
+
 def calculate_progress(counts):
-    """B의 기존 계산을 공유합니다. 저장소/인증 구현과 분리했으며 계산 규칙은 동일합니다."""
     effects = []
     for category, effect in EFFECTS.items():
         count = counts.get(category, 0)
         level = 0 if count == 0 else 1 if count < 5 else 2 if count < 10 else 3
-        effects.append({**effect.model_dump(), "category": category, "count": count, "level": level,
-                        "color": ["#d1d5db", "#f9a8d4", "#ec4899", "#be123c"][level]})
+        effects.append(
+            {
+                **effect.model_dump(),
+                "category": category,
+                "count": count,
+                "level": level,
+                "color": ["#d1d5db", "#f9a8d4", "#ec4899", "#be123c"][level],
+            }
+        )
     return effects
+
+
+def state():
+    return snapshot()[0]

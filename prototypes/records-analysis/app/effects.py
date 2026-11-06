@@ -1,5 +1,6 @@
 """Server-owned mapping; the model never invents or grants character items."""
-from pydantic import BaseModel, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from .analysis import KeywordResult
 
@@ -25,8 +26,33 @@ class AnalysisResult(KeywordResult):
     record_id: str
     awarded: bool
     progress: list[dict]
+    stack_changes: dict[str, int] = Field(default_factory=dict)
 
 
-def attach_effect(result: KeywordResult, record_id: str, awarded: bool, progress: list[dict]) -> AnalysisResult:
+def attach_effect(
+    result: KeywordResult,
+    record_id: str,
+    awarded: bool,
+    progress: list[dict],
+    stack_changes: dict[str, int] | None = None,
+) -> AnalysisResult:
     effect = EFFECTS.get(result.category) if not result.needs_review else None
-    return AnalysisResult(**result.model_dump(), character_effect=effect, record_id=record_id, awarded=awarded, progress=progress)
+    return AnalysisResult(
+        **result.model_dump(),
+        character_effect=effect,
+        record_id=record_id,
+        awarded=awarded,
+        progress=progress,
+        stack_changes=stack_changes or {},
+    )
+
+
+def character_state(progress):
+    """초기 표현 규칙: 저장된 현재 스탯에서 표시 상태를 결정합니다."""
+    active = [item for item in progress if item["count"] > 0]
+    if not active:
+        return {"expression": "neutral", "intensity": 0, "dominant_activity": None}
+    dominant = max(active, key=lambda item: item["count"])
+    expressions = {"공부": "focused", "운동": "energetic", "연애": "heart_eyes", "술": "relaxed"}
+    return {"expression": expressions[dominant["category"]], "intensity": dominant["level"],
+            "dominant_activity": dominant["category"]}

@@ -27,3 +27,9 @@ input { display: block; width: 100%; margin: 12px 0; padding: 12px; font: inheri
 .color-purple { --avatar-color: #c4ade5; }
 
 .record-thumbnail { display: block; max-width: 100%; max-height: 240px; object-fit: contain; margin: 12px 0; }
+
+#game-section{padding:0;border:0;background:transparent}#game-frame{display:block;width:100%;height:calc(100dvh - 155px);min-height:780px;border:0;border-radius:24px;background:#f7f8f2}.connected{max-width:1100px}.connected>h1,.connected>.site-intro{display:none}.connected>section:first-of-type{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 18px;margin:0;border-radius:16px}.connected>section:first-of-type h2,.connected>section:first-of-type>p:not(#account){display:none}.connected #account{flex:1;margin:4px;font-size:.85rem}.game-tools{display:flex;justify-content:space-between;padding:10px 14px;font-size:.8rem}.secondary{background:#edf2e9;border:1px solid #c5d0bf;border-radius:8px}@media(max-width:600px){body{padding:8px}#game-frame{min-height:760px;border-radius:16px}}
+
+@font-face{font-family:"Campus Sans";src:url("/static/vendor/NotoSansKR.ttf") format("truetype");font-weight:100 900;font-display:swap}body,button,input,textarea,select{font-family:"Campus Sans",system-ui,sans-serif}
+
+#game-frame{height:calc(100dvh - 145px);min-height:0!important}.connected>p:last-child:has(a[href="/docs"]){display:none}

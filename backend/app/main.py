@@ -12,15 +12,22 @@ from app.characters.router import router as characters_router
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.request_security import same_origin_writes
+from app.game.realtime import live
+from app.game.realtime import router as realtime_router
+from app.game.router import router as game_router
 from app.integrations.router import router as integrated_router
-from app.integrations.worker import recover_interrupted
+from app.integrations.worker import rebuild_saved_stats, recover_interrupted
 from app.records.router import router as records_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await run_in_threadpool(recover_interrupted)
-    yield
+    await run_in_threadpool(rebuild_saved_stats)
+    try:
+        yield
+    finally:
+        await live.close()
 
 
 def create_app() -> FastAPI:
@@ -39,6 +46,8 @@ def create_app() -> FastAPI:
     app.include_router(characters_router)
     app.include_router(records_router, deprecated=True)
     app.include_router(integrated_router)
+    app.include_router(game_router)
+    app.include_router(realtime_router)
     frontend = Path(__file__).resolve().parents[2] / "frontend"
     app.mount("/static", StaticFiles(directory=frontend), name="assets")
     app.mount("/", StaticFiles(directory=frontend, html=True), name="frontend")

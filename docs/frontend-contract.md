@@ -57,19 +57,23 @@ stats의 각 항목은 B가 제공한 표시 정보입니다. 예시는 한 항�
 | stats[].id/name/icon/slot | 해당 표현 자산을 연결할 ID·이름·임시 아이콘·위치 |
 
 C는 B의 count/level/color를 이용해 자산을 연결합니다. 게임 규칙을 화면에서 다시 계산하지 않습니다.
-현재 B 원본에는 표정/기분/동작 상태 코드가 없으므로 A가 임의의 코드를 만들어 전달하지 않았습니다.
-이 값들이 B에서 추가되면 공통 규약에 정의한 후 C가 해당 표정/동작 자산을 연결합니다.
+표정 상태는 현재 B의 character_state 함수에서 제공하며 C의 Phaser 렌더러가 표시합니다.
 이전 `effects`는 호환용이며 새 통합 화면에서는 `stats`를 사용합니다.
 
 분석 후 stat_status=applied이면 캐릭터를 다시 조회합니다.
 skipped는 판단 보류이며 오류나 스탯 획득으로 표시하지 않습니다.
 사용자가 입력한 글·닉네임·키워드는 textContent 등으로 표시해 HTML로 실행하지 않습니다.
 
-## main의 Phaser 초안 병합
+## 실행 화면
 
-main의 `774b44d` 커밋이 공통 frontend/shared/main.js를 Phaser 초안으로 바꿨습니다.
-A 통합 진입점과 충돌하여 C의 소스를 frontend/characters/phaser-draft.js에 원문 그대로 보존했습니다.
-공통 진입점은 접속/최초 설정/통합 기록 API 흐름을 유지합니다.
-초안의 `import Phaser from 'phaser'`에는 별도 Phaser 의존성/빌드 환경이 필요합니다.
-현재 root 화면은 이 초안을 자동 실행하지 않습니다. C의 게임 화면 연결 단계에서 실행 환경과 mount 위치를 연결합니다.
-이 초안의 고정 책 소품과 이동 연출을 실제 사용자 스탯으로 간주하지 않습니다.
+`frontend/shared/main.js`가 접속/최초 설정 후 `frontend/game/index.html`을 같은 origin에서 실행합니다.
+B의 화면 흐름은 frontend/game/app.js, 모든 실제 HTTP는 api.mjs, C의 Phaser 표현은 character.mjs/avatar.mjs/lounge-view.mjs입니다.
+원래 Phaser 초안은 frontend/characters/phaser-draft.js에 보존했습니다. Phaser와 한글 글꼴은 로컬 vendor 자산입니다.
+
+`/api/me`, `/api/progress`, `/characters/me`, 라운지 멤버/실시간 snapshot에 state가 전달됩니다.
+B의 effects.character_state가 neutral/focused/energetic/heart_eyes/relaxed 및 intensity/우세 활동을 정합니다.
+표정과 소품을 바꾸려면 avatar.mjs의 벡터 렌더러를 수정합니다. 스탯 계산은 progress.calculate_snapshot에서만 변경합니다.
+
+친구 기능은 socialMode=server이며 실제 사용자 검색·초대·수락을 이용합니다.
+라운지 좌표는 WebSocket snapshot에서 받고 별도 로컬 좌표를 진짜 공유 상태로 가장하지 않습니다.
+샘플 분석은 URL mode=demo와 source=demo를 표시하며 실제 사진 분석과 구분합니다.

@@ -45,3 +45,6 @@ class CharacterRead(BaseModel):
     effects: list[EffectRead] = Field(default_factory=list)
 
     stats: list[StatRead] = Field(default_factory=list)
+    state: dict = Field(
+        default_factory=lambda: {"expression": "neutral", "intensity": 0, "dominant_activity": None}
+    )

@@ -19,6 +19,18 @@ jobs:
       - name: Preserve B prototype rules
         working-directory: prototypes/records-analysis
         run: python -m pytest --disable-plugin-autoload -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: B UI and movement tests
+        working-directory: prototypes/records-analysis
+        run: |
+          npm ci --ignore-scripts
+          npm test
+      - name: Browser game verification
+        run: |
+          python -m playwright install --with-deps chromium
+          python scripts/verify_game.py
       - name: Verify migrations and model consistency
         env:
           DATABASE_URL: sqlite:///./ci.db

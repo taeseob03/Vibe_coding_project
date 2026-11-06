@@ -5,13 +5,12 @@ from unittest.mock import AsyncMock
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
-from google.genai.errors import APIError
-from google.genai import types
-from PIL import Image
-
 from app import analysis, routes
 from app.main import app
+from fastapi.testclient import TestClient
+from google.genai import types
+from google.genai.errors import APIError
+from PIL import Image
 
 client = TestClient(app)
 
@@ -29,7 +28,16 @@ def png():
 
 @pytest.mark.parametrize("mode", ["text", "image", "both"])
 def test_three_input_modes(monkeypatch, mode):
-    service = AsyncMock(return_value=analysis.KeywordResult(keywords=["학업"], summary="공부 기록입니다.", category="공부", category_keywords=["학업"], category_reason="학습 활동", needs_review=False))
+    service = AsyncMock(
+        return_value=analysis.KeywordResult(
+            keywords=["학업"],
+            summary="공부 기록입니다.",
+            category="공부",
+            category_keywords=["학업"],
+            category_reason="학습 활동",
+            needs_review=False,
+        )
+    )
     monkeypatch.setattr(routes, "extract_keywords", service)
     data = {"text": "도서관에서 공부했다"} if mode != "image" else {}
     files = {"image": ("sample.png", png(), "image/png")} if mode != "text" else None
@@ -41,13 +49,16 @@ def test_three_input_modes(monkeypatch, mode):
     assert bool(args[1]) == (mode != "text")
 
 
-@pytest.mark.parametrize("data,files,code", [
-    ({"text": "  "}, None, 400),
-    ({"text": "a" * 5001}, None, 400),
-    ({}, {"image": ("fake.png", b"not an image", "image/png")}, 400),
-    ({}, {"image": ("empty.png", b"", "image/png")}, 400),
-    ({}, {"image": ("big.png", b"x" * (10 * 1024 * 1024 + 1), "image/png")}, 413),
-])
+@pytest.mark.parametrize(
+    "data,files,code",
+    [
+        ({"text": "  "}, None, 400),
+        ({"text": "a" * 5001}, None, 400),
+        ({}, {"image": ("fake.png", b"not an image", "image/png")}, 400),
+        ({}, {"image": ("empty.png", b"", "image/png")}, 400),
+        ({}, {"image": ("big.png", b"x" * (10 * 1024 * 1024 + 1), "image/png")}, 413),
+    ],
+)
 def test_invalid_inputs_never_call_ai(monkeypatch, data, files, code):
     service = AsyncMock()
     monkeypatch.setattr(routes, "extract_keywords", service)
@@ -62,13 +73,16 @@ def test_missing_key(monkeypatch):
     assert "GEMINI_API_KEY" in response.json()["detail"]
 
 
-@pytest.mark.parametrize("error,code", [
-    (httpx.ReadTimeout("secret"), 504),
-    (APIError(403, {"error": {"message": "secret"}}), 503),
-    (APIError(429, {"error": {"message": "secret"}}), 429),
-    (APIError(404, {"error": {"message": "secret"}}), 503),
-    (APIError(500, {"error": {"message": "secret"}}), 502),
-])
+@pytest.mark.parametrize(
+    "error,code",
+    [
+        (httpx.ReadTimeout("secret"), 504),
+        (APIError(403, {"error": {"message": "secret"}}), 503),
+        (APIError(429, {"error": {"message": "secret"}}), 429),
+        (APIError(404, {"error": {"message": "secret"}}), 503),
+        (APIError(500, {"error": {"message": "secret"}}), 502),
+    ],
+)
 def test_safe_errors(monkeypatch, error, code):
     monkeypatch.setattr(routes, "extract_keywords", AsyncMock(side_effect=error))
     response = client.post("/api/keywords", data={"text": "공부"})
@@ -78,9 +92,12 @@ def test_safe_errors(monkeypatch, error, code):
 
 def test_sdk_payload_and_result(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "test-only")
-    generate = AsyncMock(return_value=SimpleNamespace(
-        candidates=[SimpleNamespace(finish_reason=types.FinishReason.STOP)],
-        text='{"keywords":["책"],"summary":"책입니다.","category":"공부","category_keywords":["책"],"category_reason":"독서","needs_review":false}'))
+    generate = AsyncMock(
+        return_value=SimpleNamespace(
+            candidates=[SimpleNamespace(finish_reason=types.FinishReason.STOP)],
+            text='{"keywords":["책"],"summary":"책입니다.","category":"공부","category_keywords":["책"],"category_reason":"독서","needs_review":false}',
+        )
+    )
     sdk = AsyncMock()
     sdk.__aenter__.return_value = SimpleNamespace(models=SimpleNamespace(generate_content=generate))
     monkeypatch.setattr(analysis.genai, "Client", lambda **kwargs: SimpleNamespace(aio=sdk))
@@ -97,8 +114,11 @@ def test_sdk_payload_and_result(monkeypatch):
 def test_incomplete_result(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "test-only")
     sdk = AsyncMock()
-    sdk.__aenter__.return_value = SimpleNamespace(models=SimpleNamespace(
-        generate_content=AsyncMock(return_value=SimpleNamespace(candidates=[], text=None))))
+    sdk.__aenter__.return_value = SimpleNamespace(
+        models=SimpleNamespace(
+            generate_content=AsyncMock(return_value=SimpleNamespace(candidates=[], text=None))
+        )
+    )
     monkeypatch.setattr(analysis.genai, "Client", lambda **kwargs: SimpleNamespace(aio=sdk))
     with pytest.raises(analysis.AnalysisUnavailable):
         asyncio.run(analysis.extract_keywords("공부", None, None))
@@ -107,12 +127,32 @@ def test_incomplete_result(monkeypatch):
 def test_page_and_static():
     assert client.get("/").status_code == 200
     assert client.get("/static/app.js").status_code == 200
+    assert client.get("/lounge").status_code == 200
+    assert client.get("/static/lounge-view.mjs").status_code == 200
+    assert "javascript" in client.get("/static/lounge-engine.mjs").headers["content-type"]
     assert client.get("/.env").status_code == 404
 
 
-@pytest.mark.parametrize("category,effect_id", [("술", "drink_mug"), ("공부", "study_book"), ("연애", "love_hearts"), ("운동", "exercise_dumbbell")])
+@pytest.mark.parametrize(
+    "category,effect_id",
+    [
+        ("술", "drink_mug"),
+        ("공부", "study_book"),
+        ("연애", "love_hearts"),
+        ("운동", "exercise_dumbbell"),
+    ],
+)
 def test_category_effect_mapping(monkeypatch, category, effect_id):
-    service = AsyncMock(return_value=analysis.KeywordResult(keywords=[category], summary="활동 기록", category=category, category_keywords=[category], category_reason="명시적 활동", needs_review=False))
+    service = AsyncMock(
+        return_value=analysis.KeywordResult(
+            keywords=[category],
+            summary="활동 기록",
+            category=category,
+            category_keywords=[category],
+            category_reason="명시적 활동",
+            needs_review=False,
+        )
+    )
     monkeypatch.setattr(routes, "extract_keywords", service)
     response = client.post("/api/keywords", data={"text": "활동 기록"})
     assert response.status_code == 200
@@ -123,5 +163,8 @@ def test_category_effect_mapping(monkeypatch, category, effect_id):
 
 def test_invalid_category_rejected():
     from pydantic import ValidationError
+
     with pytest.raises(ValidationError):
-        analysis.KeywordResult(keywords=[], summary="", category="여행", category_reason="", needs_review=True)
+        analysis.KeywordResult(
+            keywords=[], summary="", category="여행", category_reason="", needs_review=True
+        )

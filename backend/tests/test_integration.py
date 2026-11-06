@@ -145,15 +145,15 @@ def test_analysis_failure_preserves_original_and_retry_succeeds(integrated):
 
 def test_state_failure_retries_saved_analysis_without_ai(integrated, monkeypatch):
     client, _, ai = integrated
-    calculate = state_store.calculate_progress
+    calculate = state_store.calculate_snapshot
 
-    def failing_calculation(values):
+    def failing_calculation(values, *args):
         if values:
             raise RuntimeError("state save simulation")
-        return calculate(values)
+        return calculate(values, *args)
 
     with monkeypatch.context() as patch:
-        patch.setattr(state_store, "calculate_progress", failing_calculation)
+        patch.setattr(state_store, "calculate_snapshot", failing_calculation)
         record_id = submit(client).json()["id"]
     saved = client.get(f"/api/records/{record_id}").json()
     assert saved["status"] == "completed" and saved["stat_status"] == "failed"

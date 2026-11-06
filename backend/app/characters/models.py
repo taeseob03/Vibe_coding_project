@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from sqlalchemy import JSON, ForeignKey, String
+from sqlalchemy import JSON, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -14,3 +14,6 @@ class Character(Base):
     color: Mapped[str] = mapped_column(String(20))
 
     stats: Mapped[list | None] = mapped_column(JSON, nullable=True)
+
+    stat_revision: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    title_id: Mapped[str | None] = mapped_column(String(40), nullable=True)

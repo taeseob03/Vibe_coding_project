@@ -1,10 +1,15 @@
 from campus_records_prototype.analysis import KeywordResult
-from campus_records_prototype.progress import calculate_progress, eligible_category
-from sqlalchemy import func, select, update
+from campus_records_prototype.progress import (
+    calculate_progress,
+    calculate_snapshot,
+    eligible_category,
+)
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.characters.models import Character
 from app.core.db import get_engine
+from app.game.service import award_titles
 from app.integrations.models import ActivityRecord
 from app.integrations.schemas import StatRead
 
@@ -41,18 +46,22 @@ def apply_saved_state(user_id: str, record_id: str) -> list[dict]:
         record.category = eligible_category(result)
         record.stat_status = "applied" if record.category is not None else "skipped"
         record.state_error = None
+        if record.category is not None:
+            character.stat_revision += 1
+            record.applied_order = character.stat_revision
         db.flush()
-        counts = dict(
-            db.execute(
-                select(ActivityRecord.category, func.count())
-                .where(
-                    ActivityRecord.user_id == user_id,
-                    ActivityRecord.stat_status == "applied",
-                )
-                .group_by(ActivityRecord.category)
-            ).all()
-        )
-        stats = [StatRead.model_validate(item).model_dump() for item in calculate_progress(counts)]
+        events = db.execute(
+            select(ActivityRecord.id, ActivityRecord.category)
+            .where(
+                ActivityRecord.user_id == user_id,
+                ActivityRecord.stat_status == "applied",
+            )
+            .order_by(ActivityRecord.applied_order)
+        ).all()
+        raw_stats, changes = calculate_snapshot(events, record_id)
+        stats = [StatRead.model_validate(item).model_dump() for item in raw_stats]
+        record.stack_changes = changes
+        award_titles(db, user_id)
         character.stats = stats
         record.stats_snapshot = stats
         return stats

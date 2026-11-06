@@ -26,6 +26,8 @@ class ActivityRead(BaseModel):
     request_id: UUID
     text: str
     has_image: bool
+    source: Literal["gemini", "demo"] = "gemini"
+    stack_changes: dict[str, int] | None = None
     status: Literal["pending", "processing", "completed", "failed"]
     analysis: KeywordResult | None
     analysis_error: SafeError | None

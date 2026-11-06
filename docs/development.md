@@ -113,3 +113,14 @@ B 공용 시제품 DB는 사용자별 DB에 자동 합치지 않습니다.
 자동 테스트는 외부 API를 호출하지 않습니다.
 개발 서버는 단일 프로세스입니다. 서버 시작 시 미완료 작업을 실패로 바꿔 원본으로 재시도하도록 합니다.
 여러 프로세스/서버의 작업 소유권과 외부 큐는 후속 구현입니다.
+
+## 통합 게임 실행 버전
+
+`0006`이 최초 스탯 반영 순서, 칭호, 라운지/초대 테이블을 추가합니다.
+B의 새 calculate_snapshot과 character_state를 사용하며 화면은 frontend/game 아래에서 실행합니다.
+Node 빌드 없이 vendored Phaser로 실행합니다. 한글 글꼴과 라이선스는 frontend/vendor에 포함합니다.
+`make setup`, `make migrate`, `.env` 확인 후 `make dev`를 실행합니다.
+검증: make check, B의 pytest/npm test, `python scripts/verify_game.py`.
+실제 Gemini 사진 1회까지 검사할 때만 `--live-ai`를 추가합니다. 임시 DB를 사용합니다.
+샘플 모드는 development에서만 가능하며 source=demo로 구분합니다.
+운영 프로세스는 1개입니다. 여러 워커에서 큐/방 메모리 공유는 추가 작업입니다.

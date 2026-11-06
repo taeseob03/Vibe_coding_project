@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from campus_records_prototype.effects import character_state
 from pydantic import ValidationError
 from sqlalchemy import exists, select, update
 from sqlalchemy.exc import SQLAlchemyError
@@ -42,6 +43,7 @@ def read_character(db: Session, character: Character) -> CharacterRead:
         color=character.color,
         effects=[EffectRead.model_validate(effect) for effect in effects],
         stats=current_stats(character),
+        state=character_state(current_stats(character)),
     )
 
 

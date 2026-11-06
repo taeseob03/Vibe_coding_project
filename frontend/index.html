@@ -9,7 +9,7 @@
 <body>
   <main>
     <h1>캠퍼스 캐릭터</h1>
-    <p>기록을 남기고 내 캐릭터의 변화를 확인해 보세요.</p>
+    <p class="site-intro">작은 기록으로 만드는 나의 캠퍼스</p>
     <section aria-labelledby="account-heading">
       <h2 id="account-heading">아이디로 시작하기</h2>
       <p>처음 입력한 아이디는 새 계정이 되고, 다시 입력하면 이어서 사용할 수 있어요.</p>
@@ -23,6 +23,7 @@
         <p id="username-help">한글·영문·숫자·밑줄 2~20자. 영문 대소문자는 구분하지 않아요.</p>
         <button type="submit">시작하기 / 이어하기</button>
       </form>
+      <button id="guest-demo" type="button" class="secondary">샘플 체험 계정으로 시작</button>
       <button id="logout" type="button" hidden>로그아웃</button>
     </section>
     <section id="setup-section" aria-labelledby="setup-heading" hidden>
@@ -54,6 +55,7 @@
         </div>
       </form>
     </section>
+    <section id="game-section" hidden><div class="game-tools"><span id="runtime-status"></span><a id="mode-switch" href="/?mode=demo">샘플 체험</a></div><iframe id="game-frame" title="캠퍼스 통합 게임" allow="autoplay" hidden></iframe></section>
     <section id="character-section" aria-labelledby="character-heading" hidden>
       <h2 id="character-heading">내 캐릭터</h2>
       <div id="character" aria-live="polite"></div>

@@ -1,0 +1,11 @@
+{
+  "name": "campus-app-prototype",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/lounge-engine.test.mjs tests/social-model.test.mjs tests/app-ui.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "24.1.3"
+  }
+}
