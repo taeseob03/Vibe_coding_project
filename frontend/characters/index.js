@@ -34,7 +34,7 @@ export async function mountCharacter(nickname) {
         icon.textContent = stat.icon;
         icon.style.color = stat.color;
         const value = document.createElement('span');
-        value.textContent = ` ${stat.category} · ${stat.count}회 · 표시 단계 ${stat.level}`;
+        value.textContent = ` ${stat.category === '운동' ? '건강' : stat.category} · ${stat.count}회 · 표시 단계 ${stat.level}`;
         item.append(icon, value);
         stats.append(item);
       }

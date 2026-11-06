@@ -64,7 +64,7 @@ export function mountRecords() {
           result.textContent = record.analysis.keywords.map(k => '#' + k).join(' ');
           item.append(result);
           const state = document.createElement('p');
-          state.textContent = record.stat_status === 'applied' ? `${record.analysis.category} 활동이 반영됐어요.`
+          state.textContent = record.stat_status === 'applied' ? '게시완료!'
             : record.stat_status === 'skipped' ? '분류 근거가 부족하거나 판단이 애매해 스탯 반영을 보류했어요.'
             : record.stat_status === 'failed' ? '분석은 완료됐지만 캐릭터 상태를 저장하지 못했어요.'
             : '캐릭터 상태를 저장하고 있어요.';

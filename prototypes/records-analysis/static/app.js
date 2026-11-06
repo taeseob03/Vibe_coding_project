@@ -1,6 +1,6 @@
 import { api } from './api.mjs';
 import { config } from './app-config.mjs';
-import { assets, renderCharacter, countsFromProgress } from './character.mjs';
+import { assets, renderCharacter, countsFromProgress, categoryLabel } from './character.mjs';
 import { createLounge } from './lounge-view.mjs';
 import { createFeed } from './feed.mjs';
 
@@ -64,13 +64,13 @@ function renderMe() {
   renderCharacter($('#main-character'), progress, me.emoji, me.color, me);
   $('#activity-counts').replaceChildren(...progress.map(item => {
     const card = document.createElement('div'); card.className = 'activity-card';
-    const category = document.createElement('span'); category.textContent = assets.icons[item.category] + ' ' + item.category;
-    const count = document.createElement('strong'); count.textContent = item.count + (item.category === '운동' ? '스택' : '회');
+    const category = document.createElement('span'); category.textContent = assets.icons[item.category] + ' ' + categoryLabel(item.category);
+    const count = document.createElement('strong'); count.textContent = item.count + '회';
     const level = document.createElement('span'); level.textContent = 'Lv.' + item.level;
     card.append(category,count,level);return card;
   }));
   const total = progress.reduce((sum,item)=>sum+item.count,0);
-  $('#character-description').textContent = total ? '지금까지 쌓인 활동 스택: ' + total : '첫 기록을 올려 캐릭터를 꾸며보세요.';
+  $('#character-description').textContent = total ? '지금까지 쌓인 활동: ' + total + '회' : '첫 기록을 올려 캐릭터를 꾸며보세요.';
   updateLounge();
 }
 function updateLounge() {
@@ -249,13 +249,13 @@ $('#post-form').onsubmit=async event=>{
     const result=await api.post(body);progress=result.progress;renderMe();posted=true;
     const tags=result.keywords.map(keyword=>{const tag=document.createElement('span');tag.className='tag';tag.textContent='#'+keyword;return tag;});
     $('#result-keywords').replaceChildren(...tags);
-    $('#result-category').textContent=result.category ? '분류: '+result.category+' · '+result.category_keywords.join(', ') : '관련 활동 키워드를 찾지 못했어요.';
+    $('#result-category').textContent=result.category ? '분류: '+categoryLabel(result.category)+' · '+result.category_keywords.join(', ') : '관련 활동 키워드를 찾지 못했어요.';
     const exerciseLoss=result.stack_changes?.['운동'] === -1;
-    const awardMessage=result.category+' 활동이 1회 쌓였어요.'+(exerciseLoss?' 운동 스택은 1 줄었어요.':result.category==='술'?' 운동 스택이 0이라 더 줄어들지 않았어요.':'');
+    const awardMessage=categoryLabel(result.category)+' 활동이 1회 쌓였어요.'+(exerciseLoss?' 건강 횟수는 1회 줄었어요.':result.category==='술'?' 건강 횟수가 0회라 더 줄어들지 않았어요.':'');
     $('#result-effect').textContent=result.needs_review?'분류가 불명확해 활동 누적을 보류했어요.':result.awarded?awardMessage: '이미 반영한 기록이라 중복 누적하지 않았어요.';
-    $('#post-result h3').textContent=result.needs_review?'기록 분석을 마쳤어요':'기록이 반영됐어요';
+    $('#post-result h3').textContent='게시완료!';
     $('#post-form').hidden=true;$('#post-result').hidden=false;status('#post-status','분석 완료');
-    status('#global-status',result.awarded?result.category+' +1'+(exerciseLoss?' · 운동 −1':'')+' · 캐릭터가 갱신됐어요.':'기록 분석을 마쳤어요.');
+    status('#global-status',result.awarded?categoryLabel(result.category)+' +1'+(exerciseLoss?' · 건강 −1':'')+' · 캐릭터가 갱신됐어요.':'게시완료!');
   }catch(error){status('#post-status',error.message+' 입력은 유지되어 있어요.',true);}
   finally{busy=false;$('#post-fields').disabled=false;$('#close-post').disabled=false;$('#post-form').setAttribute('aria-busy','false');}
 };

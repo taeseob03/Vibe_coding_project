@@ -5,6 +5,9 @@ export const assets = {
   heartColors: ['#aaa', '#f9a8d4', '#ec4899', '#be123c'],
 };
 
+// Keep existing stored category keys while presenting the current product terminology.
+export const categoryLabel = category => category === '운동' ? '건강' : category;
+
 export function countsFromProgress(progress) {
   return Object.fromEntries(progress.map(item => [item.category, item.count]));
 }
@@ -27,7 +30,7 @@ export function renderCharacter(container, progress, emoji = assets.body, color,
     effect.textContent = assets.icons[item.category] || item.icon;
     effect.style.fontSize = `${24 + item.level * 8}px`;
     effect.style.color = item.color;
-    effect.setAttribute('role', 'img'); effect.setAttribute('aria-label', `${item.category} 효과 ${item.level}단계`);
+    effect.setAttribute('role', 'img'); effect.setAttribute('aria-label', `${categoryLabel(item.category)} 효과 ${item.level}단계`);
     container.append(effect);
   }
   // The integrated server supplies C's pixel artwork; standalone tests keep the emoji fallback.

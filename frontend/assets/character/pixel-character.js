@@ -14,7 +14,7 @@ export const HAIR = {
 export const CATS = [
   { key: 'drink',    name: '술',   item: '술병', unit: '병' },
   { key: 'study',    name: '공부', item: '책',   unit: '권' },
-  { key: 'exercise', name: '운동', item: '덤벨', unit: '개' },
+  { key: 'exercise', name: '건강', item: '덤벨', unit: '개' },
   { key: 'love',     name: '연애', item: '하트', unit: '개' },
 ];
 

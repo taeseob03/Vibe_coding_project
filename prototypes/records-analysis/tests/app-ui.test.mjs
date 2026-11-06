@@ -70,7 +70,10 @@ test('app flow: swipe, nickname search, pending invitation, acceptance, inbox, p
   $('#show-character').click();$('#open-post').click();drinking=true;
   $('#post-text').value='맥주를 마셨다.';$('#post-form').dispatchEvent(new win.Event('submit',{bubbles:true,cancelable:true}));
   await until(()=>!$('#post-result').hidden);
-  assert.ok($('#result-effect').textContent.includes('운동 스택은 1 줄었어요'));
-  assert.ok($('#global-status').textContent.includes('운동 −1'));
+  assert.ok($('#result-effect').textContent.includes('건강 횟수는 1회 줄었어요'));
+  assert.ok($('#global-status').textContent.includes('건강 −1'));
+  assert.equal($('#post-result h3').textContent, '게시완료!');
+  assert.ok($('#activity-counts').textContent.includes('건강'));
+  assert.ok(!$('#activity-counts').textContent.includes('스택'));
   dom.window.close();
 });
