@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>캠퍼스 캐릭터 미리보기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6efe4; --card: #fffaf2; --ink: #3a2a20; --muted: #8a7462;
+    --line: #e6d6c2; --accent: #e8734a; --accent-ink: #fff; --chip: #f1e4d2;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; }
+  header { max-width: 1080px; margin: 0 auto; padding: 24px 20px 8px; }
+  h1 { font-family: "Jua", sans-serif; font-weight: 400; font-size: 30px; margin: 0; }
+  header p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 12px 20px 40px;
+    display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 820px) { main { grid-template-columns: 1fr; } .stage-card { position: static !important; } }
+  .card { background: var(--card); border: 2px solid var(--line); border-radius: 16px; }
+  .stage-card { padding: 12px; position: sticky; top: 12px; }
+  canvas { width: 100%; height: auto; display: block; image-rendering: pixelated; border-radius: 10px; }
+  .stage-info { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 4px 2px; }
+  .pill { background: var(--chip); border-radius: 999px; padding: 4px 10px; font-size: 13px; }
+  .pill b { font-weight: 700; }
+  .panel { padding: 0; overflow: hidden; }
+  .tabs { display: flex; border-bottom: 2px solid var(--line); }
+  .tabs button { flex: 1; border: 0; background: transparent; padding: 14px 8px; font: inherit; font-size: 15px;
+    color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 700; }
+  .tabs button .n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--chip); font-size: 12px; margin-right: 6px; }
+  .tabs button[aria-selected="true"] .n { background: var(--accent); color: var(--accent-ink); }
+  section.step { padding: 20px; display: none; }
+  section.step.active { display: block; }
+  h2 { font-family: "Jua", sans-serif; font-weight: 400; font-size: 21px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+  label.f { display: block; font-size: 14px; font-weight: 700; margin: 14px 0 6px; }
+  input[type=text], select, textarea { width: 100%; padding: 11px 12px; font: inherit; font-size: 15px;
+    border: 2px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  .err { color: #c0392b; font-size: 13px; min-height: 18px; margin-top: 6px; }
+  .btn { border: 0; border-radius: 10px; padding: 12px 18px; font: inherit; font-size: 15px; font-weight: 700;
+    background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+  .btn.ghost { background: var(--chip); color: var(--ink); }
+  .btn.small { padding: 6px 10px; font-size: 13px; border-radius: 8px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .seg { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 8px; }
+  .seg button { border: 2px solid var(--line); background: #fff; border-radius: 10px; padding: 10px 6px;
+    font: inherit; font-size: 14px; cursor: pointer; color: var(--ink); }
+  .seg button[aria-pressed="true"] { border-color: var(--accent); background: #fff1e8; font-weight: 700; }
+  .seg .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+  #major-seg button { text-align: left; padding: 12px 14px; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .swatches button { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff; cursor: pointer;
+    box-shadow: 0 0 0 2px var(--line); }
+  .swatches button[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--accent); }
+  .swatch-name { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .actions { margin-top: 22px; display: flex; justify-content: flex-end; gap: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  th, td { text-align: left; padding: 9px 4px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  td.lv { font-weight: 700; font-variant-numeric: tabular-nums; }
+  td .bar { height: 6px; background: var(--chip); border-radius: 3px; margin-top: 4px; overflow: hidden; width: 70px; }
+  td .bar i { display: block; height: 100%; background: var(--accent); }
+  .result { background: var(--chip); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 12px; min-height: 42px; }
+  .log { list-style: none; padding: 0; margin: 10px 0 0; font-size: 13px; color: var(--muted); max-height: 140px; overflow: auto; }
+  .log li { padding: 4px 0; border-bottom: 1px dashed var(--line); }
+  .note { font-size: 12px; color: var(--muted); margin-top: 16px; line-height: 1.6; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); opacity: 0;
+    background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 12px; font-size: 15px;
+    transition: .25s; pointer-events: none; z-index: 10; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<header>
+  <h1>캠퍼스 캐릭터 미리보기</h1>
+  <p>개발 계획 7장 기준 · 최초 설정(학과별 과잠) → 캐릭터 커스터마이즈 → 기록 분류와 레벨별 소품을 서버 없이 눌러볼 수 있어요.</p>
+</header>
+
+<main>
+  <div class="card stage-card">
+    <canvas id="stage" width="560" height="390" aria-label="캐릭터 미리보기"></canvas>
+    <div class="stage-info" id="stage-info"></div>
+  </div>
+
+  <div class="card panel">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-step="1" aria-selected="true"><span class="n">1</span>프로필</button>
+      <button role="tab" data-step="2" aria-selected="false"><span class="n">2</span>캐릭터</button>
+      <button role="tab" data-step="3" aria-selected="false"><span class="n">3</span>기록·레벨</button>
+    </div>
+
+    <section class="step active" data-step="1">
+      <h2>반가워요! 먼저 알려주세요</h2>
+      <p class="sub">최초 설정 ① 프로필 입력 (닉네임 · 학년 · 학과)</p>
+      <form id="profile-form" novalidate>
+        <label class="f" for="nickname">닉네임</label>
+        <input type="text" id="nickname" maxlength="12" placeholder="2~12자" autocomplete="off">
+        <label class="f" for="grade">학년</label>
+        <select id="grade">
+          <option value="1">1학년</option><option value="2">2학년</option>
+          <option value="3">3학년</option><option value="4">4학년</option>
+        </select>
+        <label class="f" id="major-label">학과 <span style="font-weight:400;color:var(--muted)">· 학과마다 과잠 색이 달라요</span></label>
+        <div class="seg" style="--cols:1" id="major-seg" role="group" aria-labelledby="major-label">
+          <button type="button" data-v="embedded"><span class="dot" style="background:#8ccbf0"></span>임베디드시스템공학과</button>
+          <button type="button" data-v="computer"><span class="dot" style="background:#2a2a31"></span>컴퓨터공학과</button>
+          <button type="button" data-v="ict"><span class="dot" style="background:#9b9ea8"></span>정보통신공학과</button>
+        </div>
+        <div class="err" id="profile-err" role="alert"></div>
+        <div class="actions"><button class="btn" type="submit">다음</button></div>
+      </form>
+    </section>
+
+    <section class="step" data-step="2">
+      <h2>나의 캐릭터 만들기</h2>
+      <p class="sub">최초 설정 ② 기본 캐릭터 선택 · 머리 길이 · 머리 색</p>
+      <label class="f">기본 캐릭터</label>
+      <div class="seg" style="--cols:2" id="base-seg">
+        <button type="button" data-v="male">기본 남성</button>
+        <button type="button" data-v="female">기본 여성</button>
+      </div>
+      <label class="f">머리 길이</label>
+      <div class="seg" id="length-seg">
+        <button type="button" data-v="short">짧게</button>
+        <button type="button" data-v="medium">중간</button>
+        <button type="button" data-v="long">길게</button>
+      </div>
+      <label class="f">머리 색</label>
+      <div class="swatches" id="swatches"></div>
+      <div class="swatch-name" id="swatch-name"></div>
+      <div class="actions">
+        <button class="btn ghost" type="button" data-goto="1">이전</button>
+        <button class="btn" type="button" data-goto="3">완료</button>
+      </div>
+    </section>
+
+    <section class="step" data-step="3">
+      <h2>오늘의 대학생활 기록</h2>
+      <p class="sub">글을 올리면 술·공부·운동·연애 중 하나로 분류되고 해당 레벨이 +1 돼요. 5레벨마다 소품이 생기고, 개수와 크기가 커져요.</p>
+      <textarea id="record" rows="3" placeholder="예: 도서관에서 시험 공부를 했다."></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="submit-record" type="button">기록하기</button>
+        <button class="btn ghost" id="sample" type="button">예시 문장</button>
+      </div>
+      <div class="result" id="result" aria-live="polite">분류 결과가 여기에 표시돼요.</div>
+
+      <table aria-label="카테고리별 레벨">
+        <thead><tr><th>카테고리</th><th>레벨</th><th>소품</th><th>테스트</th></tr></thead>
+        <tbody id="levels"></tbody>
+      </table>
+      <div class="row" style="margin-top:12px; justify-content:flex-end">
+        <button class="btn ghost small" id="reset" type="button">레벨 초기화</button>
+      </div>
+      <ul class="log" id="log"></ul>
+      <p class="note">
+        · 옷은 학과 과잠이에요: 임베디드 = 하늘색, 컴퓨터 = 검정(임베디드 디자인), 정보통신 = 회색.<br>
+        · 캐릭터는 계획서 7.2 형식(2~2.5등신 치비 픽셀, 레이어: 뒷머리 → 몸·옷 → 얼굴 → 앞머리 → 소품)으로 코드로 그린 <b>임시 시안</b>이에요. 최종 원본 이미지로 교체하면 돼요.<br>
+        · 여기서 분류는 키워드로 흉내 낸 것이고, 실제 앱에서는 AI가 분류하고 서버가 레벨을 올려요.<br>
+        · 소품 규칙: 단계 = ⌊레벨 ÷ 5⌋, 개수 = 최대 3, 크기 = 1.0배부터 단계마다 +0.15 (최대 1.6배).
+      </p>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script type="module" src="/preview/character.js"></script>
+</body>
+</html>
