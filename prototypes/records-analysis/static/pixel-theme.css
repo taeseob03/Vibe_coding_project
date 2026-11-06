@@ -286,7 +286,10 @@ body > main label { font-weight: 700; }
 @media (prefers-reduced-motion: reduce) {
   button { transition: none; }
 }
-.main-character.has-pixel-character { width: min(100%, 420px); height: auto; }
-.character-stage:has(.has-pixel-character) { height: auto; min-height: 300px; padding: 18px 0; }
+.main-character.has-pixel-character { width: 100%; height: auto; }
+.main-character.has-pixel-character canvas { display: block; }
+.character-stage:has(.has-pixel-character) { height: auto; min-height: 0; padding: 0; background: none; }
+.character-stage:has(.has-pixel-character)::before { z-index: 2; }
+.character-stage:has(.has-pixel-character)::after { display: none; }
 .character-stage:has(.has-pixel-character) .stage-decoration,
 .character-stage:has(.has-pixel-character) .character-ground { display: none; }
